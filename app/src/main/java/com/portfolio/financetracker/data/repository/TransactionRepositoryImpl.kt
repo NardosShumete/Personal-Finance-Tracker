@@ -24,6 +24,10 @@ class TransactionRepositoryImpl(
         }
     }
 
+    override suspend fun getTransactionById(id: Int): Transaction? {
+        return dao.getTransactionById(id)?.toDomainModel()
+    }
+
     override suspend fun insertTransaction(transaction: Transaction) {
         dao.insertTransaction(transaction.toEntityModel())
     }

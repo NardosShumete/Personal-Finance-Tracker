@@ -11,5 +11,7 @@ data class TransactionEntity(
     val category: String,
     val date: Long,
     val type: String,
-    val note: String
+    val note: String,
+    val receiptPath: String? = null,
+    val recurringPeriod: String = "NONE"
 )

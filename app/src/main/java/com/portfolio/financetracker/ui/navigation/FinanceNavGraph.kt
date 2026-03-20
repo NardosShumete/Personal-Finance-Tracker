@@ -8,6 +8,8 @@ import androidx.navigation.compose.rememberNavController
 import com.portfolio.financetracker.ui.charts.ChartsScreen
 import com.portfolio.financetracker.ui.dashboard.DashboardScreen
 import com.portfolio.financetracker.ui.transaction.AddTransactionScreen
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 @Composable
 fun FinanceNavGraph(
@@ -19,15 +21,31 @@ fun FinanceNavGraph(
     ) {
         composable(route = Screen.DashboardScreen.route) {
             DashboardScreen(
-                onNavigateToAddTransaction = {
-                    navController.navigate(Screen.AddEditTransactionScreen.route)
+                onNavigateToAddTransaction = { transactionId ->
+                    val route = if (transactionId != null) {
+                        "${Screen.AddEditTransactionScreen.route}?transactionId=$transactionId"
+                    } else {
+                        Screen.AddEditTransactionScreen.route
+                    }
+                    navController.navigate(route)
                 },
                 onNavigateToCharts = {
                     navController.navigate(Screen.ChartsScreen.route)
+                },
+                onNavigateToSettings = {
+                    navController.navigate(Screen.SettingsScreen.route)
                 }
             )
         }
-        composable(route = Screen.AddEditTransactionScreen.route) {
+        composable(
+            route = Screen.AddEditTransactionScreen.route + "?transactionId={transactionId}",
+            arguments = listOf(
+                navArgument("transactionId") {
+                    type = NavType.IntType
+                    defaultValue = -1
+                }
+            )
+        ) {
             AddTransactionScreen(
                 onNavigateBack = {
                     navController.popBackStack()
@@ -36,6 +54,33 @@ fun FinanceNavGraph(
         }
         composable(route = Screen.ChartsScreen.route) {
             ChartsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        composable(route = Screen.SettingsScreen.route) {
+            com.portfolio.financetracker.ui.settings.SettingsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToMonthlyGoals = {
+                    navController.navigate(Screen.MonthlyGoalsScreen.route)
+                },
+                onNavigateToAboutUs = {
+                    navController.navigate(Screen.AboutUsScreen.route)
+                }
+            )
+        }
+        composable(route = Screen.MonthlyGoalsScreen.route) {
+            com.portfolio.financetracker.ui.settings.goals.MonthlyGoalsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        composable(route = Screen.AboutUsScreen.route) {
+            com.portfolio.financetracker.ui.settings.about.AboutUsScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }

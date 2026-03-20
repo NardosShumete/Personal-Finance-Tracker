@@ -11,6 +11,13 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
+import com.portfolio.financetracker.domain.use_case.GetTransactionUseCase
+
+import com.portfolio.financetracker.domain.repository.GoalRepository
+import com.portfolio.financetracker.domain.use_case.GoalUseCases
+import com.portfolio.financetracker.domain.use_case.GetGoalUseCase
+import com.portfolio.financetracker.domain.use_case.SaveGoalUseCase
+
 @Module
 @InstallIn(SingletonComponent::class)
 object UseCaseModule {
@@ -19,8 +26,18 @@ object UseCaseModule {
     fun provideTransactionUseCases(repository: TransactionRepository): TransactionUseCases {
         return TransactionUseCases(
             getTransactions = GetTransactionsUseCase(repository),
+            getTransaction = GetTransactionUseCase(repository),
             deleteTransaction = DeleteTransactionUseCase(repository),
             addTransaction = AddTransactionUseCase(repository)
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideGoalUseCases(repository: GoalRepository): GoalUseCases {
+        return GoalUseCases(
+            getGoal = GetGoalUseCase(repository),
+            saveGoal = SaveGoalUseCase(repository)
         )
     }
 }

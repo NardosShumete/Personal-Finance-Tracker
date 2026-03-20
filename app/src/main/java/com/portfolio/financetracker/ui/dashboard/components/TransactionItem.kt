@@ -11,7 +11,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.portfolio.financetracker.domain.model.Transaction
 import com.portfolio.financetracker.domain.model.TransactionType
-import java.text.NumberFormat
+import com.portfolio.financetracker.core.util.CurrencyHelper
+import com.portfolio.financetracker.core.util.LocalCurrencyCode
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -22,7 +23,7 @@ fun TransactionItem(
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val formatter = NumberFormat.getCurrencyInstance(Locale("en", "ET"))
+    val currencyCode = LocalCurrencyCode.current
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
     
     val isIncome = transaction.type == TransactionType.INCOME
@@ -61,8 +62,9 @@ fun TransactionItem(
             }
             
             Column(horizontalAlignment = Alignment.End) {
+                val formattedAmount = CurrencyHelper.formatAmount(transaction.amount, currencyCode)
                 Text(
-                    text = "$amountPrefix${formatter.format(transaction.amount)}",
+                    text = "$amountPrefix$formattedAmount",
                     style = MaterialTheme.typography.titleMedium,
                     color = amountColor,
                     fontWeight = FontWeight.Bold

@@ -12,11 +12,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import com.portfolio.financetracker.domain.use_case.GoalUseCases
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
-    private val transactionUseCases: TransactionUseCases
+    private val transactionUseCases: TransactionUseCases,
+    private val goalUseCases: GoalUseCases
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DashboardState())
@@ -26,8 +31,16 @@ class DashboardViewModel @Inject constructor(
 
     init {
         getTransactions()
+        loadCurrentMonthGoal()
     }
     
+    private fun loadCurrentMonthGoal() {
+        val currentMonthYear = SimpleDateFormat("MM-yyyy", Locale.getDefault()).format(Date())
+        goalUseCases.getGoal(currentMonthYear).onEach { goal ->
+            _state.value = _state.value.copy(monthlyGoal = goal)
+        }.launchIn(viewModelScope)
+    }
+
     fun onEvent(event: DashboardEvent) {
         when(event) {
             is DashboardEvent.OnSearchQueryChanged -> {

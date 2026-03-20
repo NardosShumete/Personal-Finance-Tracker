@@ -1,6 +1,7 @@
 package com.portfolio.financetracker.data.mapper
 
 import com.portfolio.financetracker.data.local.entity.TransactionEntity
+import com.portfolio.financetracker.domain.model.RecurringPeriod
 import com.portfolio.financetracker.domain.model.Transaction
 import com.portfolio.financetracker.domain.model.TransactionType
 
@@ -11,7 +12,9 @@ fun TransactionEntity.toDomainModel(): Transaction {
         category = category,
         date = date,
         type = TransactionType.valueOf(type),
-        note = note
+        note = note,
+        receiptPath = receiptPath,
+        recurringPeriod = RecurringPeriod.valueOf(recurringPeriod)
     )
 }
 
@@ -21,7 +24,9 @@ fun Transaction.toEntityModel(): TransactionEntity {
         amount = amount,
         category = category,
         date = date,
-        type = type.name, // Convert enum to string
-        note = note
+        type = type.name,
+        note = note,
+        receiptPath = receiptPath,
+        recurringPeriod = recurringPeriod.name
     )
 }

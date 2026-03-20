@@ -22,12 +22,24 @@ object AppModule {
             app,
             FinanceDatabase::class.java,
             FinanceDatabase.DATABASE_NAME
-        ).build()
+        ).fallbackToDestructiveMigration().build()
     }
 
     @Provides
     @Singleton
     fun provideTransactionRepository(db: FinanceDatabase): TransactionRepository {
         return TransactionRepositoryImpl(db.transactionDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGoalRepository(db: FinanceDatabase): com.portfolio.financetracker.domain.repository.GoalRepository {
+        return com.portfolio.financetracker.data.repository.GoalRepositoryImpl(db.monthlyGoalDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDataStoreManager(app: Application): com.portfolio.financetracker.data.local.DataStoreManager {
+        return com.portfolio.financetracker.data.local.DataStoreManager(app)
     }
 }
