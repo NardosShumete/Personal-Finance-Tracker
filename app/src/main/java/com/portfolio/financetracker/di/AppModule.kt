@@ -1,0 +1,33 @@
+package com.portfolio.financetracker.di
+
+import android.app.Application
+import androidx.room.Room
+import com.portfolio.financetracker.data.local.FinanceDatabase
+import com.portfolio.financetracker.data.repository.TransactionRepositoryImpl
+import com.portfolio.financetracker.domain.repository.TransactionRepository
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+object AppModule {
+
+    @Provides
+    @Singleton
+    fun provideFinanceDatabase(app: Application): FinanceDatabase {
+        return Room.databaseBuilder(
+            app,
+            FinanceDatabase::class.java,
+            FinanceDatabase.DATABASE_NAME
+        ).build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideTransactionRepository(db: FinanceDatabase): TransactionRepository {
+        return TransactionRepositoryImpl(db.transactionDao)
+    }
+}

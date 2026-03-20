@@ -1,0 +1,47 @@
+# Built objects
+bin/
+gen/
+out/
+build/
+.gradle/
+.idea/
+.DS_Store
+*.iml
+
+# App specific
+/app/build/
+/local.properties
+/captures/
+.externalNativeBuild
+.cxx
+*google-services.json
+
+# Log files
+*.log
+
+# Keystore files
+*.jks
+*.keystore
+
+# Android Studio local configs
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/gradle.xml
+.idea/deploymentTargetDropDown.xml
+.idea/modules/
+.idea/kotlinc.xml
+.idea/misc.xml
+.idea/runConfigurations.xml
+.idea/scopes/
+.idea/vcs.xml
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
