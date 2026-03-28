@@ -37,6 +37,9 @@ class BiometricViewModel @Inject constructor(
     val currencyCode: StateFlow<String> = dataStoreManager.currencyCode
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "ETB")
 
+    val languageCode: StateFlow<String> = dataStoreManager.languageCode
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "en")
+
     private val _isAuthenticated = MutableStateFlow(false)
     val isAuthenticated: StateFlow<Boolean> = _isAuthenticated
 
@@ -72,6 +75,12 @@ class BiometricViewModel @Inject constructor(
     fun setCurrencyCode(code: String) {
         viewModelScope.launch {
             dataStoreManager.setCurrencyCode(code)
+        }
+    }
+
+    fun setLanguageCode(code: String) {
+        viewModelScope.launch {
+            dataStoreManager.setLanguageCode(code)
         }
     }
 

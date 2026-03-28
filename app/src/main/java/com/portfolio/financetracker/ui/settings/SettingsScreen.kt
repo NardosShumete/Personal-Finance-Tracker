@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,6 +26,8 @@ import com.portfolio.financetracker.ui.auth.BiometricViewModel
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.portfolio.financetracker.R
 import com.portfolio.financetracker.core.util.CurrencyHelper
 import kotlinx.coroutines.launch
 
@@ -63,7 +66,7 @@ fun SettingsScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
@@ -81,7 +84,7 @@ fun SettingsScreen(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Security",
+                text = stringResource(R.string.security),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(vertical = 8.dp)
@@ -99,9 +102,9 @@ fun SettingsScreen(
                         Icon(imageVector = Icons.Default.Fingerprint, contentDescription = null)
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            Text(text = "Biometric Lock", style = MaterialTheme.typography.bodyLarge)
+                            Text(text = stringResource(R.string.biometric_lock), style = MaterialTheme.typography.bodyLarge)
                             Text(
-                                text = "Require fingerprint to open app",
+                                text = stringResource(R.string.biometric_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -117,7 +120,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Preferences",
+                text = stringResource(R.string.preferences),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(vertical = 8.dp)
@@ -140,9 +143,9 @@ fun SettingsScreen(
                         Icon(imageVector = Icons.Default.DarkMode, contentDescription = "Dark Mode")
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            Text(text = "Dark Mode", style = MaterialTheme.typography.bodyLarge)
+                            Text(text = stringResource(R.string.dark_mode), style = MaterialTheme.typography.bodyLarge)
                             Text(
-                                text = "Toggle application theme",
+                                text = stringResource(R.string.dark_mode_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -164,7 +167,7 @@ fun SettingsScreen(
             if (showCurrencyDialog) {
                 AlertDialog(
                     onDismissRequest = { showCurrencyDialog = false },
-                    title = { Text("Select Currency") },
+                    title = { Text(stringResource(R.string.select_currency)) },
                     text = {
                         LazyColumn {
                             items(CurrencyHelper.supportedCurrencies) { currency ->
@@ -184,7 +187,7 @@ fun SettingsScreen(
                     },
                     confirmButton = {
                         TextButton(onClick = { showCurrencyDialog = false }) {
-                            Text("Cancel")
+                            Text(stringResource(R.string.cancel))
                         }
                     }
                 )
@@ -206,9 +209,73 @@ fun SettingsScreen(
                         Icon(imageVector = Icons.Default.MonetizationOn, contentDescription = "Currency")
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            Text(text = "Main Currency", style = MaterialTheme.typography.bodyLarge)
+                            Text(text = stringResource(R.string.main_currency), style = MaterialTheme.typography.bodyLarge)
                             Text(
-                                text = "Current: $currentCurrency",
+                                text = stringResource(R.string.current_currency, currentCurrency),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                    Icon(imageVector = Icons.Default.ChevronRight, contentDescription = "Open")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Language Toggle
+            var showLanguageDialog by remember { mutableStateOf(false) }
+            val currentLanguage by viewModel.languageCode.collectAsState()
+            val languageOptions = listOf(Pair("en", "English"), Pair("am", "አማርኛ"))
+
+            if (showLanguageDialog) {
+                AlertDialog(
+                    onDismissRequest = { showLanguageDialog = false },
+                    title = { Text(stringResource(R.string.select_language)) },
+                    text = {
+                        LazyColumn {
+                            items(languageOptions) { lang ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            viewModel.setLanguageCode(lang.first)
+                                            showLanguageDialog = false
+                                        }
+                                        .padding(16.dp)
+                                ) {
+                                    Text(text = lang.second, style = MaterialTheme.typography.bodyLarge)
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showLanguageDialog = false }) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                    }
+                )
+            }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showLanguageDialog = true }
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(imageVector = Icons.Default.Language, contentDescription = "Language")
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(text = stringResource(R.string.language), style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                text = stringResource(R.string.current_currency, if(currentLanguage == "am") "አማርኛ" else "English"),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -236,9 +303,9 @@ fun SettingsScreen(
                         Icon(imageVector = Icons.Default.Flag, contentDescription = "Goals")
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            Text(text = "Monthly Goals", style = MaterialTheme.typography.bodyLarge)
+                            Text(text = stringResource(R.string.monthly_goals), style = MaterialTheme.typography.bodyLarge)
                             Text(
-                                text = "Set your budget and income targets",
+                                text = stringResource(R.string.monthly_goals_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -251,7 +318,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "About",
+                text = stringResource(R.string.about_us),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(vertical = 8.dp)
@@ -273,9 +340,9 @@ fun SettingsScreen(
                         Icon(imageVector = Icons.Default.Info, contentDescription = "About Us")
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            Text(text = "About Us", style = MaterialTheme.typography.bodyLarge)
+                            Text(text = stringResource(R.string.about_us), style = MaterialTheme.typography.bodyLarge)
                             Text(
-                                text = "Developer info, feedback & privacy",
+                                text = stringResource(R.string.about_us_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -288,7 +355,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Data Management",
+                text = stringResource(R.string.data_management),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(vertical = 8.dp)
@@ -310,9 +377,9 @@ fun SettingsScreen(
                         Icon(imageVector = Icons.Default.Info, contentDescription = "Export CSV")
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            Text(text = "Export Data (CSV)", style = MaterialTheme.typography.bodyLarge)
+                            Text(text = stringResource(R.string.export_data), style = MaterialTheme.typography.bodyLarge)
                             Text(
-                                text = "Save your transactions to device",
+                                text = stringResource(R.string.export_data_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

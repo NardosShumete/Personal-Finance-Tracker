@@ -1,0 +1,62 @@
+<resources>
+    <!-- General -->
+    <string name="app_name">የፋይናንስ መከታተያ</string>
+    <string name="total_balance">አጠቃላይ ቀሪ</string>
+    <string name="income">ገቢ</string>
+    <string name="expense">ወጪ</string>
+    
+    <!-- Dashboard -->
+    <string name="recent_transactions">የቅርብ ጊዜ ዝውውሮች</string>
+    <string name="view_all">ሁሉንም አሳይ</string>
+    <string name="budget_usage">የበጀት አጠቃቀም</string>
+    <string name="spent">ወጪ የተደረገ</string>
+    <string name="left">የተቀረ</string>
+    
+    <!-- Transaction -->
+    <string name="add_transaction">ዝውውር አክል</string>
+    <string name="edit_transaction">ዝውውር አርም</string>
+    <string name="amount">መጠን</string>
+    <string name="category">ምድብ</string>
+    <string name="date">ቀን</string>
+    <string name="note">ማስታወሻ</string>
+    <string name="save">አስቀምጥ</string>
+    <string name="cancel">ሰርዝ</string>
+    
+    <!-- Settings -->
+    <string name="settings">ቅንብሮች</string>
+    <string name="security">ደህንነት</string>
+    <string name="biometric_lock">የጣት አሻራ ቁልፍ</string>
+    <string name="biometric_desc">መተግበሪያ ለመክፈት አሻራ ይፈልጋል</string>
+    <string name="preferences">ምርጫዎች</string>
+    <string name="dark_mode">ጨለማ ገጽታ</string>
+    <string name="dark_mode_desc">የመተግበሪያ ገጽታ ቀይር</string>
+    <string name="main_currency">ዋና ገንዘብ</string>
+    <string name="current_currency">የአሁኑ: %1$s</string>
+    <string name="monthly_goals">ወርሃዊ ግቦች</string>
+    <string name="monthly_goals_desc">በጀትዎን እና የገቢ ግብዎን ያስቀምጡ</string>
+    <string name="about_us">ስለ እኛ</string>
+    <string name="about_us_desc">የገንቢ መረጃ፣ አስተያየት እና ግላዊነት</string>
+    <string name="data_management">መረጃ አስተዳደር</string>
+    <string name="export_data">መረጃ ላክ (CSV)</string>
+    <string name="export_data_desc">የዝውውር መረጃዎን በስልክዎ ያስቀምጡ</string>
+    <string name="language">ቋንቋ</string>
+    <string name="language_desc">የመተግበሪያ ቋንቋ ቀይር</string>
+
+    <!-- Dialogs -->
+    <string name="select_currency">ገንዘብ ይምረጡ</string>
+    <string name="select_language">ቋንቋ ይምረጡ</string>
+    
+    <!-- Categories (Keys used for mapping) -->
+    <string name="cat_food">ምግብ</string>
+    <string name="cat_transport">ትራንስፖርት</string>
+    <string name="cat_shopping">ግብይት</string>
+    <string name="cat_housing">ቤት</string>
+    <string name="cat_utilities">መገልገያዎች</string>
+    <string name="cat_salary">ደሞዝ</string>
+    <string name="cat_freelance">የግል ስራ</string>
+    <string name="cat_investment">ኢንቨስትመንት</string>
+    <string name="cat_family">ቤተሰብ</string>
+    <string name="cat_entertainment">መዝናኛ</string>
+    <string name="cat_other">ሌላ</string>
+
+</resources>

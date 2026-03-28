@@ -16,6 +16,24 @@ import com.portfolio.financetracker.core.util.LocalCurrencyCode
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.ui.res.stringResource
+import com.portfolio.financetracker.R
+
+@Composable
+fun getCategoryStringOrFallback(key: String): String {
+    return when(key.lowercase()) {
+        "food", "cat_food" -> stringResource(R.string.cat_food)
+        "transport", "cat_transport" -> stringResource(R.string.cat_transport)
+        "shopping", "cat_shopping" -> stringResource(R.string.cat_shopping)
+        "housing", "cat_housing" -> stringResource(R.string.cat_housing)
+        "utilities", "cat_utilities" -> stringResource(R.string.cat_utilities)
+        "salary", "cat_salary" -> stringResource(R.string.cat_salary)
+        "freelance", "cat_freelance" -> stringResource(R.string.cat_freelance)
+        "investment", "cat_investment" -> stringResource(R.string.cat_investment)
+        "other", "cat_other" -> stringResource(R.string.cat_other)
+        else -> key
+    }
+}
 
 @Composable
 fun TransactionItem(
@@ -43,7 +61,7 @@ fun TransactionItem(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = transaction.category,
+                    text = getCategoryStringOrFallback(transaction.category),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )

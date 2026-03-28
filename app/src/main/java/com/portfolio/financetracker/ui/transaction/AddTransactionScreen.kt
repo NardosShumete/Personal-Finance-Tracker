@@ -21,6 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.stringResource
+import com.portfolio.financetracker.R
 import com.portfolio.financetracker.domain.model.RecurringPeriod
 import com.portfolio.financetracker.domain.model.TransactionType
 import kotlinx.coroutines.flow.collectLatest
@@ -111,7 +113,7 @@ fun AddTransactionScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(if (state.id == null) "Add Transaction" else "Edit Transaction") },
+                title = { Text(if (state.id == null) stringResource(R.string.add_transaction) else stringResource(R.string.edit_transaction)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
@@ -154,7 +156,7 @@ fun AddTransactionScreen(
                     FilterChip(
                         selected = isSelected,
                         onClick = { viewModel.onEvent(AddTransactionEvent.ChangedType(type)) },
-                        label = { Text(type.name) },
+                        label = { Text(if (type == TransactionType.INCOME) stringResource(R.string.income) else stringResource(R.string.expense)) },
                         modifier = Modifier.padding(horizontal = 4.dp)
                     )
                 }
@@ -164,7 +166,7 @@ fun AddTransactionScreen(
             OutlinedTextField(
                 value = state.amount,
                 onValueChange = { viewModel.onEvent(AddTransactionEvent.EnteredAmount(it)) },
-                label = { Text("Amount") },
+                label = { Text(stringResource(R.string.amount)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
                 prefix = { Text("Br ") }
@@ -174,9 +176,42 @@ fun AddTransactionScreen(
             OutlinedTextField(
                 value = state.category,
                 onValueChange = { viewModel.onEvent(AddTransactionEvent.EnteredCategory(it)) },
-                label = { Text("Category (e.g. Groceries)") },
+                label = { Text(stringResource(R.string.category)) },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            val categorySuggestions = if (state.type == TransactionType.INCOME) {
+                listOf(
+                    stringResource(R.string.cat_salary),
+                    stringResource(R.string.cat_freelance),
+                    stringResource(R.string.cat_investment),
+                    stringResource(R.string.cat_family),
+                    stringResource(R.string.cat_other)
+                )
+            } else {
+                listOf(
+                    stringResource(R.string.cat_food),
+                    stringResource(R.string.cat_transport),
+                    stringResource(R.string.cat_shopping),
+                    stringResource(R.string.cat_housing),
+                    stringResource(R.string.cat_utilities),
+                    stringResource(R.string.cat_entertainment),
+                    stringResource(R.string.cat_other)
+                )
+            }
+
+            androidx.compose.foundation.lazy.LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(categorySuggestions.size) { index ->
+                    val suggestion = categorySuggestions[index]
+                    SuggestionChip(
+                        onClick = { viewModel.onEvent(AddTransactionEvent.EnteredCategory(suggestion)) },
+                        label = { Text(suggestion) }
+                    )
+                }
+            }
 
             // Date Picker Trigger
             OutlinedCard(
@@ -189,7 +224,7 @@ fun AddTransactionScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     val formattedDate = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(state.date))
-                    Text(text = "Date: $formattedDate", style = MaterialTheme.typography.bodyLarge)
+                    Text(text = stringResource(R.string.date) + ": $formattedDate", style = MaterialTheme.typography.bodyLarge)
                     Icon(imageVector = Icons.Default.CalendarMonth, contentDescription = null)
                 }
             }
@@ -221,7 +256,7 @@ fun AddTransactionScreen(
             OutlinedTextField(
                 value = state.note,
                 onValueChange = { viewModel.onEvent(AddTransactionEvent.EnteredNote(it)) },
-                label = { Text("Note (Optional)") },
+                label = { Text(stringResource(R.string.note)) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3
             )
@@ -236,7 +271,7 @@ fun AddTransactionScreen(
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text(
-                    text = if (state.id == null) "Save Transaction" else "Update Transaction", 
+                    text = stringResource(R.string.save), 
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )

@@ -22,6 +22,7 @@ class DataStoreManager @Inject constructor(private val context: Context) {
         val IS_DARK_MODE_KEY = booleanPreferencesKey("is_dark_mode")
         val IS_ONBOARDED_KEY = booleanPreferencesKey("is_onboarded")
         val CURRENCY_CODE_KEY = androidx.datastore.preferences.core.stringPreferencesKey("currency_code")
+        val LANGUAGE_CODE_KEY = androidx.datastore.preferences.core.stringPreferencesKey("language_code")
     }
 
     val isBiometricEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
@@ -42,6 +43,10 @@ class DataStoreManager @Inject constructor(private val context: Context) {
 
     val currencyCode: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[CURRENCY_CODE_KEY] ?: "ETB"
+    }
+
+    val languageCode: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[LANGUAGE_CODE_KEY] ?: "en"
     }
 
     suspend fun setBiometricEnabled(enabled: Boolean) {
@@ -71,6 +76,12 @@ class DataStoreManager @Inject constructor(private val context: Context) {
     suspend fun setCurrencyCode(code: String) {
         context.dataStore.edit { preferences ->
             preferences[CURRENCY_CODE_KEY] = code
+        }
+    }
+
+    suspend fun setLanguageCode(code: String) {
+        context.dataStore.edit { preferences ->
+            preferences[LANGUAGE_CODE_KEY] = code
         }
     }
 }

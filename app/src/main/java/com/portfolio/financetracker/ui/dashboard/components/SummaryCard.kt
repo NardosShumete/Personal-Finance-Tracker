@@ -6,6 +6,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.portfolio.financetracker.R
 import com.portfolio.financetracker.ui.dashboard.DashboardState
 import com.portfolio.financetracker.core.util.CurrencyHelper
 import com.portfolio.financetracker.core.util.LocalCurrencyCode
@@ -17,7 +19,6 @@ fun SummaryCard(
 ) {
     val currencyCode = LocalCurrencyCode.current
 
-    
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -29,7 +30,7 @@ fun SummaryCard(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Total Balance",
+                text = stringResource(id = R.string.total_balance),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
             )
@@ -48,7 +49,7 @@ fun SummaryCard(
             ) {
                 Column {
                     Text(
-                        text = "Income",
+                        text = stringResource(id = R.string.income),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     )
@@ -62,7 +63,7 @@ fun SummaryCard(
                 
                 Column {
                     Text(
-                        text = "Expense",
+                        text = stringResource(id = R.string.expense),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     )
@@ -93,7 +94,7 @@ fun SummaryCard(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Budget Usage",
+                            text = stringResource(id = R.string.budget_usage),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
@@ -123,13 +124,13 @@ fun SummaryCard(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "${CurrencyHelper.formatAmount(state.totalExpense, currencyCode)} Spent",
+                            text = "${CurrencyHelper.formatAmount(state.totalExpense, currencyCode)} ${stringResource(R.string.spent)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
                         val remaining = (goal.expenseLimit - state.totalExpense).coerceAtLeast(0.0)
                         Text(
-                            text = "${CurrencyHelper.formatAmount(remaining, currencyCode)} Left",
+                            text = "${CurrencyHelper.formatAmount(remaining, currencyCode)} ${stringResource(R.string.left)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )

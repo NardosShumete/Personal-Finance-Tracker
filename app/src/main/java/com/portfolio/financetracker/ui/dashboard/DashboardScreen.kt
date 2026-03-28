@@ -17,6 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.stringResource
+import com.portfolio.financetracker.R
 import com.portfolio.financetracker.ui.dashboard.components.SummaryCard
 import com.portfolio.financetracker.ui.dashboard.components.TransactionItem
 
@@ -33,7 +35,7 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Dashboard") },
+                title = { Text(stringResource(R.string.app_name)) },
                 actions = {
                     IconButton(onClick = onNavigateToCharts) {
                         Icon(imageVector = Icons.Default.List, contentDescription = "View Charts")
@@ -80,7 +82,7 @@ fun DashboardScreen(
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                text = "Recent Transactions",
+                text = stringResource(R.string.recent_transactions),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )

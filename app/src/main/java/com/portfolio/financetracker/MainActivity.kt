@@ -54,10 +54,24 @@ class MainActivity : FragmentActivity() {
             val isDarkModeEnabled by biometricViewModel.isDarkModeEnabled.collectAsState()
             val useDarkTheme = isDarkModeEnabled ?: androidx.compose.foundation.isSystemInDarkTheme()
             val currencyCode by biometricViewModel.currencyCode.collectAsState()
+            val languageCode by biometricViewModel.languageCode.collectAsState()
+            
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val locale = java.util.Locale(languageCode)
+            java.util.Locale.setDefault(locale)
+            val config = android.content.res.Configuration(context.resources.configuration)
+            config.setLocale(locale)
+            val configContext = context.createConfigurationContext(config)
+            val localizedContext = object : android.content.ContextWrapper(context) {
+                override fun getResources() = configContext.resources
+                override fun getTheme() = configContext.theme
+            }
             
             PersonalFinanceTrackerTheme(darkTheme = useDarkTheme) {
                 androidx.compose.runtime.CompositionLocalProvider(
-                    com.portfolio.financetracker.core.util.LocalCurrencyCode provides currencyCode
+                    com.portfolio.financetracker.core.util.LocalCurrencyCode provides currencyCode,
+                    androidx.compose.ui.platform.LocalContext provides localizedContext,
+                    androidx.compose.ui.platform.LocalConfiguration provides config
                 ) {
                     val isOnboarded by biometricViewModel.isOnboarded.collectAsState()
                     val isFirstTime by biometricViewModel.isFirstTimeUser.collectAsState()
