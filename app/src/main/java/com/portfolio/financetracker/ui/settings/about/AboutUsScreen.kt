@@ -202,7 +202,7 @@ private fun openUrl(context: Context, url: String) {
 private fun openEmail(context: Context) {
     val intent = Intent(Intent.ACTION_SENDTO).apply {
         data = Uri.parse("mailto:")
-        putExtra(Intent.EXTRA_EMAIL, arrayOf("developer@example.com")) // Replace with actual email
+        putExtra(Intent.EXTRA_EMAIL, arrayOf("shumetnardos40@gmail.com")) // Replace with actual email
         putExtra(Intent.EXTRA_SUBJECT, "Finance Tracker App Feedback")
     }
     context.startActivity(Intent.createChooser(intent, "Send Email"))
