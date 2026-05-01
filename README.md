@@ -53,9 +53,4 @@ The app follows **Clean Architecture** principles to ensure scalability, maintai
 3. Let Gradle sync and download dependencies.
 4. Run the app on an emulator or physical device (API 26+). *Note: Biometric features require testing on a physical device with a fingerprint sensor or an emulator configured with fingerprint support.*
 
-## 📄 License
 
-This project is open-source and available under the [MIT License](LICENSE).
-
----
-*Built as a professional portfolio piece to demonstrate modern Android development excellence.*
