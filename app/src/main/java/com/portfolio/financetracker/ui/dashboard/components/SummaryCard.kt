@@ -11,6 +11,7 @@ import com.portfolio.financetracker.R
 import com.portfolio.financetracker.ui.dashboard.DashboardState
 import com.portfolio.financetracker.core.util.CurrencyHelper
 import com.portfolio.financetracker.core.util.LocalCurrencyCode
+import com.portfolio.financetracker.ui.theme.financeColors
 
 @Composable
 fun SummaryCard(
@@ -57,7 +58,7 @@ fun SummaryCard(
                         text = CurrencyHelper.formatAmount(state.totalIncome, currencyCode),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.financeColors.income
                     )
                 }
                 
@@ -71,7 +72,7 @@ fun SummaryCard(
                         text = CurrencyHelper.formatAmount(state.totalExpense, currencyCode),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.error
+                        color = MaterialTheme.financeColors.expense
                     )
                 }
             }
@@ -84,9 +85,9 @@ fun SummaryCard(
 
                     val progress = (state.totalExpense / goal.expenseLimit).toFloat().coerceIn(0f, 1f)
                     val progressColor = when {
-                        progress > 0.9f -> MaterialTheme.colorScheme.error
+                        progress > 0.9f -> MaterialTheme.financeColors.expense
                         progress > 0.7f -> MaterialTheme.colorScheme.tertiary
-                        else -> MaterialTheme.colorScheme.primary
+                        else -> MaterialTheme.financeColors.income
                     }
 
                     Row(

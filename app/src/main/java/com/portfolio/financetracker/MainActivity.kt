@@ -9,15 +9,18 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
 import com.portfolio.financetracker.core.util.BiometricAuthenticator
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import com.portfolio.financetracker.ui.auth.BiometricSetupScreen
 import com.portfolio.financetracker.ui.auth.BiometricViewModel
 import com.portfolio.financetracker.ui.navigation.FinanceNavGraph
+import com.portfolio.financetracker.ui.splash.SplashScreen
 import com.portfolio.financetracker.ui.theme.PersonalFinanceTrackerTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -55,7 +58,10 @@ class MainActivity : FragmentActivity() {
             val useDarkTheme = isDarkModeEnabled ?: androidx.compose.foundation.isSystemInDarkTheme()
             val currencyCode by biometricViewModel.currencyCode.collectAsState()
             val languageCode by biometricViewModel.languageCode.collectAsState()
-            
+
+            // Splash state — starts true, flipped to false when animation finishes
+            var showSplash by remember { mutableStateOf(true) }
+
             val context = androidx.compose.ui.platform.LocalContext.current
             val locale = java.util.Locale(languageCode)
             java.util.Locale.setDefault(locale)
@@ -66,53 +72,60 @@ class MainActivity : FragmentActivity() {
                 override fun getResources() = configContext.resources
                 override fun getTheme() = configContext.theme
             }
-            
+
             PersonalFinanceTrackerTheme(darkTheme = useDarkTheme) {
                 androidx.compose.runtime.CompositionLocalProvider(
                     com.portfolio.financetracker.core.util.LocalCurrencyCode provides currencyCode,
                     androidx.compose.ui.platform.LocalContext provides localizedContext,
                     androidx.compose.ui.platform.LocalConfiguration provides config
                 ) {
-                    val isOnboarded by biometricViewModel.isOnboarded.collectAsState()
-                    val isFirstTime by biometricViewModel.isFirstTimeUser.collectAsState()
-                    val isEnabled by biometricViewModel.isBiometricEnabled.collectAsState()
-                    val isAuthenticated by biometricViewModel.isAuthenticated.collectAsState()
+                    if (showSplash) {
+                        // Show animated splash; dismiss when animation completes (~1200 ms)
+                        SplashScreen(onSplashFinished = { showSplash = false })
+                    } else {
+                        val isOnboarded by biometricViewModel.isOnboarded.collectAsState()
+                        val isFirstTime by biometricViewModel.isFirstTimeUser.collectAsState()
+                        val isEnabled by biometricViewModel.isBiometricEnabled.collectAsState()
+                        val isAuthenticated by biometricViewModel.isAuthenticated.collectAsState()
 
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    when {
-                        !isOnboarded -> {
-                            com.portfolio.financetracker.ui.onboarding.OnboardingScreen(
-                                onFinish = {
-                                    biometricViewModel.completeOnboarding()
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.background
+                        ) {
+                            when {
+                                !isOnboarded -> {
+                                    com.portfolio.financetracker.ui.onboarding.OnboardingScreen(
+                                        onFinish = {
+                                            biometricViewModel.completeOnboarding()
+                                        }
+                                    )
                                 }
-                            )
-                        }
-                        isFirstTime && authenticator.isBiometricAvailable() -> {
-                            BiometricSetupScreen(
-                                onSetupComplete = {
-                                    // Set first time to false handles navigate to graph
+                                isFirstTime && authenticator.isBiometricAvailable() -> {
+                                    BiometricSetupScreen(
+                                        onSetupComplete = {
+                                            // Set first time to false handles navigate to graph
+                                        }
+                                    )
                                 }
-                            )
-                        }
-                        isEnabled && !isAuthenticated -> {
-                            // Show splash or locked screen while prompt is visible
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                                CircularProgressIndicator()
+                                isEnabled && !isAuthenticated -> {
+                                    // Show locked screen while biometric prompt is visible
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = androidx.compose.ui.Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
+
+                                    LaunchedEffect(Unit) {
+                                        showBiometricPrompt()
+                                    }
+                                }
+                                else -> {
+                                    FinanceNavGraph()
+                                }
                             }
-                            
-                            // Trigger prompt
-                            LaunchedEffect(Unit) {
-                                showBiometricPrompt()
-                            }
-                        }
-                        else -> {
-                            FinanceNavGraph()
                         }
                     }
-                }
                 }
             }
         }

@@ -13,6 +13,7 @@ import com.portfolio.financetracker.domain.model.Transaction
 import com.portfolio.financetracker.domain.model.TransactionType
 import com.portfolio.financetracker.core.util.CurrencyHelper
 import com.portfolio.financetracker.core.util.LocalCurrencyCode
+import com.portfolio.financetracker.ui.theme.financeColors
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -45,7 +46,7 @@ fun TransactionItem(
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
     
     val isIncome = transaction.type == TransactionType.INCOME
-    val amountColor = if (isIncome) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+    val amountColor = if (isIncome) MaterialTheme.financeColors.income else MaterialTheme.financeColors.expense
     val amountPrefix = if (isIncome) "+" else "-"
 
     Card(

@@ -91,7 +91,7 @@ fun AboutUsScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Developed by Nardos Shumete",
+                        text = "Developed by Group 2",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
