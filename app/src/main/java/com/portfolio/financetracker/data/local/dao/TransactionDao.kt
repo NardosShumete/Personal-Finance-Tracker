@@ -1,5 +1,6 @@
 package com.portfolio.financetracker.data.local.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -10,6 +11,14 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TransactionDao {
+
+    // ── Paging 3 ─────────────────────────────────────────────────────────────
+    // Room generates the PagingSource implementation automatically.
+    // Results are ordered by the indexed `date` column for fast retrieval.
+    @Query("SELECT * FROM transaction_table ORDER BY date DESC")
+    fun getTransactionsPaged(): PagingSource<Int, TransactionEntity>
+
+    // ── Existing queries (kept for summary calculations) ──────────────────────
     @Query("SELECT * FROM transaction_table ORDER BY date DESC")
     fun getAllTransactions(): Flow<List<TransactionEntity>>
 
@@ -22,6 +31,7 @@ interface TransactionDao {
     @Delete
     suspend fun deleteTransaction(transaction: TransactionEntity)
 
+    // Uses the `type` index for fast filtering
     @Query("SELECT * FROM transaction_table WHERE type = :type ORDER BY date DESC")
     fun getTransactionsByType(type: String): Flow<List<TransactionEntity>>
 }
