@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -32,6 +33,7 @@ fun DashboardScreen(
     onNavigateToAddTransaction: (Int?) -> Unit,
     onNavigateToCharts: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
+    onOpenDrawer: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     // Summary state — balance, totals, search query, goal
@@ -45,6 +47,11 @@ fun DashboardScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
+                navigationIcon = {
+                    IconButton(onClick = onOpenDrawer) {
+                        Icon(imageVector = Icons.Default.Menu, contentDescription = "Open Menu")
+                    }
+                },
                 actions = {
                     IconButton(onClick = onNavigateToCharts) {
                         Icon(imageVector = Icons.Default.List, contentDescription = "View Charts")
