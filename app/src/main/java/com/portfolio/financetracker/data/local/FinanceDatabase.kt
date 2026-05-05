@@ -9,7 +9,7 @@ import com.portfolio.financetracker.data.local.entity.TransactionEntity
 
 @Database(
     entities = [TransactionEntity::class, MonthlyGoalEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class FinanceDatabase : RoomDatabase() {
