@@ -105,17 +105,29 @@ class MainActivity : FragmentActivity() {
                         color = MaterialTheme.colorScheme.background
                     ) {
                         when {
-                            // 1. Onboarding not done yet
-                            !isOnboarded -> {
+                            // DataStore still loading from disk — wait silently
+                            isOnboarded == null -> {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) { CircularProgressIndicator() }
+                            }
+                            // First launch — show onboarding pages
+                            isOnboarded == false -> {
                                 com.portfolio.financetracker.ui.onboarding.OnboardingScreen(
                                     onFinish = { biometricViewModel.completeOnboarding() }
                                 )
                             }
-                            // 2. First time — offer biometric setup
+                            // Onboarded, biometric never configured — offer setup once
                             isFirstTime && authenticator.isBiometricAvailable() -> {
-                                BiometricSetupScreen(onSetupComplete = {})
+                                BiometricSetupScreen(
+                                    onSetupComplete = {
+                                        // Mark first-time done so this screen never shows again
+                                        biometricViewModel.skipFirstTimeSetup()
+                                    }
+                                )
                             }
-                            // 3. Biometric lock active — show prompt
+                            // Biometric lock active — show prompt
                             isBioEnabled && !isAuthenticated -> {
                                 Box(
                                     modifier = Modifier.fillMaxSize(),
@@ -123,7 +135,7 @@ class MainActivity : FragmentActivity() {
                                 ) { CircularProgressIndicator() }
                                 LaunchedEffect(Unit) { showBiometricPrompt() }
                             }
-                            // 4. All gates passed — show app with correct start screen
+                            // All gates passed — show the app
                             else -> {
                                 FinanceNavGraph(
                                     startDestination = startDestination,

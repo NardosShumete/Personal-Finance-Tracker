@@ -28,8 +28,12 @@ class BiometricViewModel @Inject constructor(
     val isFirstTimeUser: StateFlow<Boolean> = dataStoreManager.isFirstTimeUser
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
-    val isOnboarded: StateFlow<Boolean> = dataStoreManager.isOnboarded
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+    // null = DataStore not loaded yet (still reading from disk)
+    // false = loaded, user has NOT completed onboarding → show it
+    // true  = loaded, user HAS completed onboarding → skip it
+    // This prevents the onboarding screen from flashing on every launch.
+    val isOnboarded: StateFlow<Boolean?> = dataStoreManager.isOnboarded
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val isDarkModeEnabled: StateFlow<Boolean?> = dataStoreManager.isDarkModeEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)

@@ -82,4 +82,8 @@ class AuthRepositoryImpl @Inject constructor(
         val name  = dataStore.userName.first()
         return if (uid.isNotBlank()) UserProfile(uid, email, name) else null
     }
+
+    override suspend fun sendPasswordReset(email: String): Result<Unit> = runCatching {
+        firebaseAuth.sendPasswordResetEmail(email).await()
+    }
 }

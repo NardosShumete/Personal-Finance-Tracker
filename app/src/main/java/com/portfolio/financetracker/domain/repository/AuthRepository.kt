@@ -27,4 +27,11 @@ interface AuthRepository {
 
     /** Loads the locally cached profile (DataStore). */
     suspend fun loadCachedProfile(): UserProfile?
+
+    /**
+     * Sends a Firebase password-reset email to [email].
+     * Returns [Result.success] if the email was dispatched,
+     * [Result.failure] with a user-friendly message otherwise.
+     */
+    suspend fun sendPasswordReset(email: String): Result<Unit>
 }

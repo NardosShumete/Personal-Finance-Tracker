@@ -16,16 +16,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.res.stringResource
+import coil.compose.AsyncImage
 import com.portfolio.financetracker.R
 import com.portfolio.financetracker.domain.model.RecurringPeriod
 import com.portfolio.financetracker.domain.model.TransactionType
 import kotlinx.coroutines.flow.collectLatest
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -242,14 +246,75 @@ fun AddTransactionScreen(
                 }
             }
 
-            // Receipt Photo Launcher
-            OutlinedButton(
-                onClick = { photoLauncher.launch("image/*") },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(imageVector = Icons.Default.PhotoCamera, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(if (state.receiptPath == null) "Attach Receipt Photo" else "Receipt Attached ✅")
+            // Receipt Photo
+            if (state.isUploadingReceipt) {
+                // Show progress while image is being copied to permanent storage
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text("Saving receipt...", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            } else if (state.receiptPath != null) {
+                // Receipt saved — show preview thumbnail + remove button
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        // Thumbnail
+                        AsyncImage(
+                            model = File(state.receiptPath),
+                            contentDescription = "Receipt preview",
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(MaterialTheme.shapes.small),
+                            contentScale = ContentScale.Crop
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Receipt Attached ✅",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "Tap × to remove",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        IconButton(onClick = {
+                            viewModel.onEvent(AddTransactionEvent.RemoveReceipt)
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Remove receipt",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
+            } else {
+                // No receipt yet — show attach button
+                OutlinedButton(
+                    onClick = { photoLauncher.launch("image/*") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(imageVector = Icons.Default.PhotoCamera, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Attach Receipt Photo")
+                }
             }
 
             // Note
