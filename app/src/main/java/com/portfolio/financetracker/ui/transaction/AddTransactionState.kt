@@ -11,5 +11,7 @@ data class AddTransactionState(
     val type: TransactionType = TransactionType.EXPENSE,
     val date: Long = System.currentTimeMillis(),
     val receiptPath: String? = null,
-    val recurringPeriod: RecurringPeriod = RecurringPeriod.NONE
+    val recurringPeriod: RecurringPeriod = RecurringPeriod.NONE,
+    // True while the image is being copied to permanent storage
+    val isUploadingReceipt: Boolean = false
 )

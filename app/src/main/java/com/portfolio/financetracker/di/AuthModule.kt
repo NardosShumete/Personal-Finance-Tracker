@@ -9,6 +9,8 @@ import com.portfolio.financetracker.domain.use_case.auth.GetCurrentUserUseCase
 import com.portfolio.financetracker.domain.use_case.auth.RegisterUseCase
 import com.portfolio.financetracker.domain.use_case.auth.SignInUseCase
 import com.portfolio.financetracker.domain.use_case.auth.SignOutUseCase
+import com.portfolio.financetracker.domain.use_case.auth.SendPasswordResetUseCase
+import com.portfolio.financetracker.domain.use_case.auth.ValidateAuthInputUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -33,9 +35,11 @@ object AuthModule {
     @Provides
     @Singleton
     fun provideAuthUseCases(repository: AuthRepository): AuthUseCases = AuthUseCases(
-        signIn         = SignInUseCase(repository),
-        register       = RegisterUseCase(repository),
-        signOut        = SignOutUseCase(repository),
-        getCurrentUser = GetCurrentUserUseCase(repository)
+        signIn             = SignInUseCase(repository),
+        register           = RegisterUseCase(repository),
+        signOut            = SignOutUseCase(repository),
+        getCurrentUser     = GetCurrentUserUseCase(repository),
+        sendPasswordReset  = SendPasswordResetUseCase(repository),
+        validateAuthInput  = ValidateAuthInputUseCase()
     )
 }
