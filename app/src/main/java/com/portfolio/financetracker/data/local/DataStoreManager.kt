@@ -28,6 +28,10 @@ class DataStoreManager @Inject constructor(private val context: Context) {
         val USER_EMAIL_KEY         = androidx.datastore.preferences.core.stringPreferencesKey("user_email")
         val USER_NAME_KEY          = androidx.datastore.preferences.core.stringPreferencesKey("user_name")
         val IS_LOGGED_IN_KEY       = booleanPreferencesKey("is_logged_in")
+        // ── SMS Account Tracking ──────────────────────────────────────────────
+        /** Comma-separated exact sender addresses the user chose to track */
+        val TRACKED_SENDERS_KEY    = androidx.datastore.preferences.core.stringPreferencesKey("tracked_sms_senders")
+        val SMS_ENABLED_KEY        = booleanPreferencesKey("sms_tracking_enabled")
     }
 
     val isBiometricEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
@@ -115,6 +119,35 @@ class DataStoreManager @Inject constructor(private val context: Context) {
             prefs.remove(USER_EMAIL_KEY)
             prefs.remove(USER_NAME_KEY)
             prefs[IS_LOGGED_IN_KEY] = false
+        }
+    }
+
+    // ── SMS Account Tracking ──────────────────────────────────────────────────
+
+    /** Emits the set of exact sender addresses the user chose to track */
+    val trackedSmsSenders: Flow<Set<String>> = context.dataStore.data.map { prefs ->
+        prefs[TRACKED_SENDERS_KEY]
+            ?.split(",")
+            ?.map { it.trim() }
+            ?.filter { it.isNotBlank() }
+            ?.toSet()
+            ?: emptySet()
+    }
+
+    val isSmsTrackingEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[SMS_ENABLED_KEY] ?: false
+    }
+
+    /** Saves the exact sender addresses the user selected */
+    suspend fun setTrackedSmsSenders(senders: Set<String>) {
+        context.dataStore.edit { prefs ->
+            prefs[TRACKED_SENDERS_KEY] = senders.joinToString(",")
+        }
+    }
+
+    suspend fun setSmsTrackingEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[SMS_ENABLED_KEY] = enabled
         }
     }
 }

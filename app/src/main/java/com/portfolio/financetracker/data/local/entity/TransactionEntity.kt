@@ -7,12 +7,14 @@ import androidx.room.PrimaryKey
 @Entity(
     tableName = "transaction_table",
     indices = [
-        // Speeds up ORDER BY date DESC (default sort for all queries)
         Index(value = ["date"]),
-        // Speeds up WHERE category = ? (search/filter queries)
         Index(value = ["category"]),
-        // Speeds up WHERE type = ? (income/expense split queries)
-        Index(value = ["type"])
+        Index(value = ["type"]),
+        // Fast lookup by source (MANUAL vs SMS)
+        Index(value = ["source"]),
+        // Unique constraint on smsHash prevents duplicate SMS inserts.
+        // NULL values are excluded from uniqueness (MANUAL entries have null hash).
+        Index(value = ["smsHash"], unique = true)
     ]
 )
 data class TransactionEntity(
@@ -24,5 +26,15 @@ data class TransactionEntity(
     val type: String,
     val note: String,
     val receiptPath: String? = null,
-    val recurringPeriod: String = "NONE"
+    val recurringPeriod: String = "NONE",
+
+    // ── SMS Auto-Parse columns (nullable — safe for existing MANUAL rows) ─────
+    val source: String = "MANUAL",
+    val rawSms: String? = null,
+    val smsBalance: Double? = null,
+    val smsHash: String? = null,
+    /** Content Provider _id — secondary dedup key for historical sync */
+    val smsId: String? = null,
+    /** True = waiting for user confirmation in the Pending Review screen */
+    val isPending: Boolean = false
 )

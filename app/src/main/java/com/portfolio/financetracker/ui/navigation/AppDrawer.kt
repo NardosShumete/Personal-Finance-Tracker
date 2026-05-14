@@ -94,6 +94,12 @@ fun AppDrawer(
             selected = currentRoute == Screen.AboutUsScreen.route,
             onClick = { onNavigateTo(Screen.AboutUsScreen.route) }
         )
+        DrawerItem(
+            icon = Icons.Default.Sms,
+            label = "SMS Review",
+            selected = currentRoute == Screen.PendingReviewScreen.route,
+            onClick = { onNavigateTo(Screen.PendingReviewScreen.route) }
+        )
 
         Spacer(modifier = Modifier.weight(1f))
         HorizontalDivider()

@@ -1,21 +1,28 @@
 package com.portfolio.financetracker.data.repository
 
+import android.content.Context
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import com.portfolio.financetracker.core.sms.SmsInboxReader
+import com.portfolio.financetracker.core.sms.SmsParser
+import com.portfolio.financetracker.data.local.DataStoreManager
 import com.portfolio.financetracker.data.local.dao.TransactionDao
 import com.portfolio.financetracker.data.local.paging.TransactionPagingSource
 import com.portfolio.financetracker.data.mapper.toDomainModel
 import com.portfolio.financetracker.data.mapper.toEntityModel
 import com.portfolio.financetracker.domain.model.Transaction
+import com.portfolio.financetracker.domain.model.TransactionSource
 import com.portfolio.financetracker.domain.repository.TransactionRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 class TransactionRepositoryImpl(
-    private val dao: TransactionDao
+    private val dao: TransactionDao,
+    private val dataStoreManager: DataStoreManager
 ) : TransactionRepository {
 
     /**
@@ -61,5 +68,69 @@ class TransactionRepositoryImpl(
 
     override suspend fun deleteTransaction(transaction: Transaction) {
         dao.deleteTransaction(transaction.toEntityModel())
+    }
+
+    /**
+     * Inserts an SMS-parsed transaction only if no row with the same
+     * [Transaction.smsHash] already exists in the database.
+     *
+     * This is the primary deduplication guard — the unique index on
+     * `smsHash` in the entity is a secondary safety net.
+     */
+    override suspend fun insertFromSmsIfNotDuplicate(transaction: Transaction): Boolean {
+        val hash = transaction.smsHash ?: return false
+        val exists = dao.countBySmsHash(hash) > 0
+        if (exists) return false
+        dao.insertTransaction(transaction.toEntityModel())
+        return true
+    }
+
+    override fun getPendingTransactions(): Flow<List<Transaction>> =
+        dao.getPendingTransactions()
+            .map { it.map { e -> e.toDomainModel() } }
+            .flowOn(Dispatchers.IO)
+
+    override fun getPendingCount(): Flow<Int> =
+        dao.getPendingCount()
+
+    override suspend fun confirmTransaction(id: Int) =
+        dao.confirmTransaction(id)
+
+    /**
+     * Historical SMS sync — "Day 1 balance" feature.
+     *
+     * Algorithm:
+     * 1. Read up to [limitPerSender] messages per bank from content://sms/inbox
+     * 2. For each message, check smsId first (fastest), then smsHash
+     * 3. Parse with [SmsParser] — skip if not a bank transaction
+     * 4. Insert as isPending=true so user can review before it hits totals
+     */
+    override suspend fun syncSmsHistory(context: Context, limitPerSender: Int): Int {
+        val trackedSenders = dataStoreManager.trackedSmsSenders.first()
+        val rawMessages = SmsInboxReader.readFromTrackedSenders(context, trackedSenders, limitPerSender)
+        var insertedCount = 0
+
+        for (raw in rawMessages) {
+            if (raw.smsId.isNotBlank() && dao.countBySmsId(raw.smsId) > 0) continue
+            val parsed = SmsParser.parse(raw.sender, raw.body, raw.timestampMs, trackedSenders) ?: continue
+            if (dao.countBySmsHash(parsed.hash) > 0) continue
+
+            val transaction = Transaction(
+                amount     = parsed.amount,
+                category   = parsed.category,
+                date       = parsed.timestampMs,
+                type       = parsed.type,
+                note       = parsed.note,
+                source     = TransactionSource.SMS,
+                rawSms     = parsed.rawBody,
+                smsBalance = parsed.balance,
+                smsHash    = parsed.hash,
+                smsId      = raw.smsId,
+                isPending  = true
+            )
+            dao.insertTransaction(transaction.toEntityModel())
+            insertedCount++
+        }
+        return insertedCount
     }
 }
