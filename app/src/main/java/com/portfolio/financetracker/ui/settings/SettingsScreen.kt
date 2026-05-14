@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DarkMode
@@ -37,6 +38,7 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToMonthlyGoals: () -> Unit = {},
     onNavigateToAboutUs: () -> Unit = {},
+    onNavigateToSmsSetup: () -> Unit = {},
     viewModel: BiometricViewModel = hiltViewModel()
 ) {
     val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsState()
@@ -69,7 +71,7 @@ fun SettingsScreen(
                 title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -89,6 +91,13 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
+
+            // ── SMS Auto-Parse card ───────────────────────────────────────────
+            SmsPermissionCard(
+                onManageAccounts = onNavigateToSmsSetup
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
             
             Card(modifier = Modifier.fillMaxWidth()) {
                 Row(

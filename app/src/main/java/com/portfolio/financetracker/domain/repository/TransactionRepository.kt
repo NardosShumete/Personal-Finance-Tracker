@@ -26,4 +26,28 @@ interface TransactionRepository {
     suspend fun insertTransaction(transaction: Transaction)
 
     suspend fun deleteTransaction(transaction: Transaction)
+
+    /**
+     * Inserts a transaction parsed from SMS only if no transaction with the
+     * same [Transaction.smsHash] already exists. Returns true if inserted,
+     * false if it was a duplicate.
+     */
+    suspend fun insertFromSmsIfNotDuplicate(transaction: Transaction): Boolean
+
+    /** Returns pending (unconfirmed) SMS transactions as a live Flow */
+    fun getPendingTransactions(): Flow<List<Transaction>>
+
+    /** Live count of pending transactions for UI badge */
+    fun getPendingCount(): Flow<Int>
+
+    /** Marks a transaction as confirmed (isPending = false) */
+    suspend fun confirmTransaction(id: Int)
+
+    /**
+     * Syncs historical SMS from the device inbox.
+     * Reads up to [limitPerSender] messages per bank, parses them,
+     * and inserts only new ones (deduped by smsId + smsHash).
+     * Returns the count of newly inserted transactions.
+     */
+    suspend fun syncSmsHistory(context: android.content.Context, limitPerSender: Int = 200): Int
 }

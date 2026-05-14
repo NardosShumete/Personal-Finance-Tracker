@@ -1,17 +1,32 @@
 package com.portfolio.financetracker.ui.dashboard.components
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.TrendingDown
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.sp
 import com.portfolio.financetracker.R
-import com.portfolio.financetracker.ui.dashboard.DashboardState
 import com.portfolio.financetracker.core.util.CurrencyHelper
 import com.portfolio.financetracker.core.util.LocalCurrencyCode
-import com.portfolio.financetracker.ui.theme.financeColors
+import com.portfolio.financetracker.ui.dashboard.DashboardState
+import com.portfolio.financetracker.ui.theme.*
 
 @Composable
 fun SummaryCard(
@@ -20,123 +35,222 @@ fun SummaryCard(
 ) {
     val currencyCode = LocalCurrencyCode.current
 
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
+    // Mesh gradient brush — Blue → Purple → Teal
+    val meshGradient = Brush.linearGradient(
+        colorStops = arrayOf(
+            0.0f to GradientBlue,
+            0.4f to GradientPurple,
+            0.7f to GradientIndigo,
+            1.0f to GradientTeal
         )
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                text = stringResource(id = R.string.total_balance),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(meshGradient)
+            .border(
+                width = 0.5.dp,
+                brush = Brush.linearGradient(
+                    listOf(Color.White.copy(alpha = 0.3f), Color.White.copy(alpha = 0.05f))
+                ),
+                shape = RoundedCornerShape(24.dp)
             )
+    ) {
+        // Subtle radial glow overlay for depth
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.08f),
+                            Color.Transparent
+                        ),
+                        radius = 600f
+                    )
+                )
+        )
+
+        Column(modifier = Modifier.padding(24.dp)) {
+
+            // ── Label ─────────────────────────────────────────────────────────
+            Text(
+                text = stringResource(R.string.total_balance).uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White.copy(alpha = 0.7f),
+                letterSpacing = 2.sp
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // ── Hero balance ──────────────────────────────────────────────────
             Text(
                 text = CurrencyHelper.formatAmount(state.totalBalance, currencyCode),
-                style = MaterialTheme.typography.headlineLarge,
+                style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = Color.White,
+                letterSpacing = (-1).sp
             )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ── Income / Expense row ──────────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Column {
-                    Text(
-                        text = stringResource(id = R.string.income),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                    )
-                    Text(
-                        text = CurrencyHelper.formatAmount(state.totalIncome, currencyCode),
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.financeColors.income
-                    )
-                }
-                
-                Column {
-                    Text(
-                        text = stringResource(id = R.string.expense),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                    )
-                    Text(
-                        text = CurrencyHelper.formatAmount(state.totalExpense, currencyCode),
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.financeColors.expense
-                    )
-                }
+                BalancePill(
+                    label = stringResource(R.string.income),
+                    amount = CurrencyHelper.formatAmount(state.totalIncome, currencyCode),
+                    color = EmeraldGreen,
+                    isIncome = true,
+                    modifier = Modifier.weight(1f)
+                )
+                BalancePill(
+                    label = stringResource(R.string.expense),
+                    amount = CurrencyHelper.formatAmount(state.totalExpense, currencyCode),
+                    color = ElectricRose,
+                    isIncome = false,
+                    modifier = Modifier.weight(1f)
+                )
             }
-            
+
+            // ── Budget progress ───────────────────────────────────────────────
             state.monthlyGoal?.let { goal ->
                 if (goal.expenseLimit > 0) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f))
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                    val progress = (state.totalExpense / goal.expenseLimit).toFloat().coerceIn(0f, 1f)
-                    val progressColor = when {
-                        progress > 0.9f -> MaterialTheme.financeColors.expense
-                        progress > 0.7f -> MaterialTheme.colorScheme.tertiary
-                        else -> MaterialTheme.financeColors.income
+                    val rawProgress = (state.totalExpense / goal.expenseLimit).toFloat()
+                        .coerceIn(0f, 1f)
+
+                    // Animate the progress bar on first composition
+                    val animatedProgress by animateFloatAsState(
+                        targetValue = rawProgress,
+                        animationSpec = tween(1200, easing = FastOutSlowInEasing),
+                        label = "budget_progress"
+                    )
+
+                    val barColor = when {
+                        rawProgress > 0.9f -> ElectricRose
+                        rawProgress > 0.7f -> Color(0xFFF59E0B)
+                        else               -> EmeraldGreen
                     }
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = stringResource(id = R.string.budget_usage),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            text = stringResource(R.string.budget_usage),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.7f)
                         )
                         Text(
-                            text = "${(progress * 100).toInt()}%",
+                            text = "${(rawProgress * 100).toInt()}%",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
-                            color = progressColor
+                            color = barColor
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
-                    LinearProgressIndicator(
-                        progress = progress,
+                    // Custom animated progress bar with rounded cap
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(8.dp),
-                        color = progressColor,
-                        trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f)
-                    )
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(Color.White.copy(alpha = 0.15f))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(animatedProgress)
+                                .fillMaxHeight()
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(
+                                    Brush.horizontalGradient(
+                                        listOf(barColor, barColor.copy(alpha = 0.7f))
+                                    )
+                                )
+                        )
+                    }
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
+                    val remaining = (goal.expenseLimit - state.totalExpense).coerceAtLeast(0.0)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
                             text = "${CurrencyHelper.formatAmount(state.totalExpense, currencyCode)} ${stringResource(R.string.spent)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.6f)
                         )
-                        val remaining = (goal.expenseLimit - state.totalExpense).coerceAtLeast(0.0)
                         Text(
                             text = "${CurrencyHelper.formatAmount(remaining, currencyCode)} ${stringResource(R.string.left)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.6f)
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BalancePill(
+    label: String,
+    amount: String,
+    color: Color,
+    isIncome: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color.White.copy(alpha = 0.12f))
+            .border(
+                width = 0.5.dp,
+                color = Color.White.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(14.dp)
+            )
+            .padding(horizontal = 14.dp, vertical = 10.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(color.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (isIncome) Icons.Default.TrendingUp else Icons.Default.TrendingDown,
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Column {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White.copy(alpha = 0.65f)
+                )
+                Text(
+                    text = amount,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = color
+                )
             }
         }
     }

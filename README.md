@@ -144,7 +144,6 @@ Device Storage
   <img src="screenshots/add_transaction.png" width="45%" alt="Add Transaction Screenshot" />
 </p>
 
-> **Note:** To display these beautiful screenshots, make sure to save the two pictures you just uploaded into the `screenshots` folder as `dashboard.png` and `add_transaction.png` respectively!
 
 ## 🛠 Installation
 

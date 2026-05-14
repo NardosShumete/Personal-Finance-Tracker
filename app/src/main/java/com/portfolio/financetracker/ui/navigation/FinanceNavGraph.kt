@@ -114,7 +114,8 @@ fun FinanceNavGraph(
                 com.portfolio.financetracker.ui.settings.SettingsScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToMonthlyGoals = { navController.navigate(Screen.MonthlyGoalsScreen.route) },
-                    onNavigateToAboutUs = { navController.navigate(Screen.AboutUsScreen.route) }
+                    onNavigateToAboutUs = { navController.navigate(Screen.AboutUsScreen.route) },
+                    onNavigateToSmsSetup = { navController.navigate(Screen.SmsAccountSetupScreen.route) }
                 )
             }
 
@@ -129,6 +130,21 @@ fun FinanceNavGraph(
             composable(route = Screen.AboutUsScreen.route) {
                 com.portfolio.financetracker.ui.settings.about.AboutUsScreen(
                     onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // ── Pending SMS Review ────────────────────────────────────────────
+            composable(route = Screen.PendingReviewScreen.route) {
+                com.portfolio.financetracker.ui.sms.PendingReviewScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // ── SMS Account Setup ─────────────────────────────────────────────
+            composable(route = Screen.SmsAccountSetupScreen.route) {
+                com.portfolio.financetracker.ui.sms.SmsAccountSetupScreen(
+                    onNavigateBack    = { navController.popBackStack() },
+                    onSetupComplete   = { navController.popBackStack() }
                 )
             }
         }

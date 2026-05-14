@@ -27,8 +27,11 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideTransactionRepository(db: FinanceDatabase): TransactionRepository {
-        return TransactionRepositoryImpl(db.transactionDao)
+    fun provideTransactionRepository(
+        db: FinanceDatabase,
+        dataStoreManager: com.portfolio.financetracker.data.local.DataStoreManager
+    ): TransactionRepository {
+        return TransactionRepositoryImpl(db.transactionDao, dataStoreManager)
     }
 
     @Provides
