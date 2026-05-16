@@ -17,7 +17,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.portfolio.financetracker.ui.auth.AuthViewModel
 import com.portfolio.financetracker.ui.auth.LoginScreen
-import com.portfolio.financetracker.ui.calendar.CalendarScreen
 import com.portfolio.financetracker.ui.charts.ChartsScreen
 import com.portfolio.financetracker.ui.dashboard.DashboardScreen
 import com.portfolio.financetracker.ui.transaction.AddTransactionScreen
@@ -108,14 +107,6 @@ fun FinanceNavGraph(
             // ── Charts ────────────────────────────────────────────────────────
             composable(route = Screen.ChartsScreen.route) {
                 ChartsScreen(onNavigateBack = { navController.popBackStack() })
-            }
-
-            // ── Calendar & Reminders ──────────────────────────────────────────
-            composable(route = Screen.CalendarScreen.route) {
-                CalendarScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onOpenDrawer = { scope.launch { drawerState.open() } }
-                )
             }
 
             // ── Settings ──────────────────────────────────────────────────────
