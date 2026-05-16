@@ -7,9 +7,11 @@ import com.portfolio.financetracker.data.local.FinanceDatabase
 import com.portfolio.financetracker.data.local.MIGRATION_5_6
 import com.portfolio.financetracker.data.local.MIGRATION_6_7
 import com.portfolio.financetracker.data.local.MIGRATION_7_8
+import com.portfolio.financetracker.data.repository.BankAccountRepositoryImpl
 import com.portfolio.financetracker.data.repository.GoalRepositoryImpl
 import com.portfolio.financetracker.data.repository.ReminderRepositoryImpl
 import com.portfolio.financetracker.data.repository.TransactionRepositoryImpl
+import com.portfolio.financetracker.domain.repository.BankAccountRepository
 import com.portfolio.financetracker.domain.repository.GoalRepository
 import com.portfolio.financetracker.domain.repository.ReminderRepository
 import com.portfolio.financetracker.domain.repository.TransactionRepository
@@ -64,6 +66,11 @@ object AppModule {
     @Singleton
     fun provideDataStoreManager(app: Application): DataStoreManager =
         DataStoreManager(app)
+
+    @Provides
+    @Singleton
+    fun provideBankAccountRepository(db: FinanceDatabase): BankAccountRepository =
+        BankAccountRepositoryImpl(db.bankAccountDao)
 
     @Provides
     @Singleton

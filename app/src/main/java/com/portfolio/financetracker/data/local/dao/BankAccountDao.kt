@@ -13,15 +13,21 @@ interface BankAccountDao {
     @Query("SELECT * FROM bank_account_table")
     fun getAllBankAccounts(): Flow<List<BankAccountEntity>>
 
-    @Query("SELECT * FROM bank_account_table WHERE bankName = :bankName")
-    suspend fun getBankAccountByName(bankName: String): BankAccountEntity?
+    @Query("SELECT * FROM bank_account_table WHERE shortName = :shortName")
+    suspend fun getBankAccountByShortName(shortName: String): BankAccountEntity?
+
+    @Query("SELECT * FROM bank_account_table WHERE smsSenderId = :senderId")
+    suspend fun getBankAccountBySenderId(senderId: String): BankAccountEntity?
+
+    @Query("UPDATE bank_account_table SET totalIncome = totalIncome + :income, totalExpense = totalExpense + :expense, transactionCount = transactionCount + 1 WHERE shortName = :shortName")
+    suspend fun updateTotals(shortName: String, income: Double, expense: Double)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBankAccount(bankAccount: BankAccountEntity)
 
     @Update
     suspend fun updateBankAccount(bankAccount: BankAccountEntity)
-    
-    @Query("UPDATE bank_account_table SET totalTransactions = totalTransactions + 1, lastKnownBalance = :newBalance, lastUpdated = :lastUpdated WHERE bankName = :bankName")
-    suspend fun updateBalanceAndCount(bankName: String, newBalance: Double, lastUpdated: Long)
+
+    @Query("UPDATE bank_account_table SET totalIncome = :income, totalExpense = :expense, transactionCount = :count WHERE id = :id")
+    suspend fun updateTotals(id: Int, income: Double, expense: Double, count: Int)
 }

@@ -33,6 +33,10 @@ import com.portfolio.financetracker.domain.model.Transaction
 import com.portfolio.financetracker.ui.dashboard.components.SummaryCard
 import com.portfolio.financetracker.ui.dashboard.components.TransactionItem
 import com.portfolio.financetracker.ui.theme.*
+import com.portfolio.financetracker.ui.dashboard.BankAccountViewModel
+import com.portfolio.financetracker.ui.dashboard.BankAccountsSection
+import com.portfolio.financetracker.ui.dashboard.AddBankBottomSheet
+import androidx.compose.ui.draw.rotate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,10 +46,23 @@ fun DashboardScreen(
     onNavigateToCharts: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     onOpenDrawer: () -> Unit = {},
-    viewModel: DashboardViewModel = hiltViewModel()
+    viewModel: DashboardViewModel = hiltViewModel(),
+    bankViewModel: BankAccountViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val isDark = isSystemInDarkTheme()
+    
+    var showAddBankSheet by remember { mutableStateOf(false) }
+
+    if (showAddBankSheet) {
+        AddBankBottomSheet(
+            onDismiss = { showAddBankSheet = false },
+            onAddBank = { short, full, sender ->
+                bankViewModel.addBank(short, full, sender)
+                showAddBankSheet = false
+            }
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -153,42 +170,10 @@ fun DashboardScreen(
                 item { SummaryCard(state = state) }
 
                 item {
-                    Text(
-                        text = "Accounts",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
+                    BankAccountsSection(
+                        viewModel = bankViewModel,
+                        onAddBankClick = { showAddBankSheet = true }
                     )
-                }
-
-                if (state.bankBalances.isEmpty()) {
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                            )
-                        ) {
-                            Box(
-                                modifier = Modifier.fillMaxWidth().padding(24.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    "No bank accounts detected from SMS yet.",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-                }
-
-                items(
-                    items = state.bankBalances.values.toList(),
-                    key = { it.name }
-                ) { bank ->
-                    BankBalanceCard(bank = bank)
                 }
 
                 item {
