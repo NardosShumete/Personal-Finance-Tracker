@@ -21,7 +21,8 @@ fun TransactionEntity.toDomainModel(): Transaction = Transaction(
     smsBalance      = smsBalance,
     smsHash         = smsHash,
     smsId           = smsId,
-    isPending       = isPending
+    isPending       = isPending,
+    bankName        = bankName
 )
 
 fun Transaction.toEntityModel(): TransactionEntity = TransactionEntity(
@@ -38,5 +39,6 @@ fun Transaction.toEntityModel(): TransactionEntity = TransactionEntity(
     smsBalance      = smsBalance,
     smsHash         = smsHash,
     smsId           = smsId,
-    isPending       = isPending
+    isPending       = isPending,
+    bankName        = bankName
 )

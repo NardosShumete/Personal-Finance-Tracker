@@ -67,4 +67,8 @@ interface TransactionDao {
     /** Secondary dedup check using Content Provider smsId */
     @Query("SELECT COUNT(*) FROM transaction_table WHERE smsId = :smsId")
     suspend fun countBySmsId(smsId: String): Int
+
+    /** All confirmed transactions from a specific bank — for BankTransactionsScreen */
+    @Query("SELECT * FROM transaction_table WHERE bankName = :bankName AND isPending = 0 ORDER BY date DESC")
+    fun getTransactionsByBank(bankName: String): Flow<List<TransactionEntity>>
 }

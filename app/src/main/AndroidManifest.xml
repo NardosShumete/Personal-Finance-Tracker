@@ -56,6 +56,11 @@
             </intent-filter>
         </service>
 
+        <!-- Reminder Notification Action Receiver -->
+        <receiver
+            android:name=".core.receiver.ReminderActionReceiver"
+            android:exported="false" />
+
     </application>
 
 </manifest>

@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
-    id("com.google.gms.google-services")
 }
 
 android {
@@ -75,6 +74,7 @@ dependencies {
     // Biometric & DataStore
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.datastore.preferences)
+    
     // WorkManager & Hilt
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
@@ -84,11 +84,6 @@ dependencies {
     implementation(libs.paging.runtime)
     implementation(libs.paging.compose)
     implementation(libs.room.paging)
-
-    // Firebase
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.analytics)
 
     // Coil — image loading for receipt thumbnails
     implementation(libs.coil.compose)

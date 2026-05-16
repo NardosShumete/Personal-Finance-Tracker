@@ -77,10 +77,22 @@ fun AppDrawer(
             onClick = { onNavigateTo(Screen.DashboardScreen.route) }
         )
         DrawerItem(
+            icon = Icons.Default.CalendarMonth,
+            label = "Calendar & Reminders",
+            selected = currentRoute == Screen.CalendarScreen.route,
+            onClick = { onNavigateTo(Screen.CalendarScreen.route) }
+        )
+        DrawerItem(
             icon = Icons.Default.BarChart,
             label = "Charts",
             selected = currentRoute == Screen.ChartsScreen.route,
             onClick = { onNavigateTo(Screen.ChartsScreen.route) }
+        )
+        DrawerItem(
+            icon = Icons.Default.Lightbulb,
+            label = "Insights",
+            selected = currentRoute == Screen.InsightsScreen.route,
+            onClick = { onNavigateTo(Screen.InsightsScreen.route) }
         )
         DrawerItem(
             icon = Icons.Default.Settings,
