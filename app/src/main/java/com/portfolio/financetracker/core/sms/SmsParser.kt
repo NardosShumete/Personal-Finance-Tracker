@@ -70,6 +70,21 @@ object SmsParser {
         if (trackedSenders.isNotEmpty() && !isTrackedSender(sender, trackedSenders)) return null
 
         val normalizedBody = body.trim()
+
+        // Check for dynamic parsers first
+        val dynamicParser = BankSmsParserFactory.getDynamic(sender)
+        if (dynamicParser != null) {
+            when (val result = dynamicParser.parse(normalizedBody, sender, receivedAt)) {
+                is ParseResult.Success -> return result.parsed
+                is ParseResult.Failure -> {
+                    android.util.Log.w("SmsParser", "Parse failure [DYNAMIC]: ${result.reason}")
+                    // Fallthrough to detectBankFormat? Or just return null.
+                    // Usually if a dynamic parser fails, we just return null.
+                }
+                is ParseResult.Ignored -> return null
+            }
+        }
+
         val format = detectBankFormat(normalizedBody)
         val bankName = format.displayName()
 
@@ -89,8 +104,17 @@ object SmsParser {
 
         // UNKNOWN format — try generic fallback
         return when (format) {
-            BankFormat.UNKNOWN -> parseGeneric(normalizedBody, receivedAt, sender)
-            else -> null
+            BankFormat.UNKNOWN -> {
+                val parsed = parseGeneric(normalizedBody, receivedAt, sender)
+                if (parsed == null) {
+                    android.util.Log.d("SmsParser", "SMS from tracked sender '$sender' ignored (unrecognized format).")
+                }
+                parsed
+            }
+            else -> {
+                android.util.Log.d("SmsParser", "SMS from tracked sender '$sender' ignored (unrecognized format).")
+                null
+            }
         }
     }
 
@@ -233,7 +257,7 @@ object SmsParser {
         }
         val timestampMs = SmsTimestampParser.extractOrFallback(body, ts)
         val note  = "${if (type == TransactionType.INCOME) "Received" else "Sent"} ETB ${"%.2f".format(amount)} · Bank"
-        val hash  = sha256("$amount|${type.name}|${timestampMs / 60_000}|Bank")
+        val hash  = sha256(sender + body)
         return ParsedSms(
             amount      = amount,
             type        = type,
@@ -269,7 +293,7 @@ object SmsParser {
     ): ParsedSms {
         val typeLabel = if (type == TransactionType.INCOME) "Received" else "Sent"
         val note  = "$typeLabel ETB ${"%.2f".format(amount)} · $bankName"
-        val hash  = sha256("$amount|${type.name}|${ts / 60_000}|$bankName")
+        val hash  = sha256(bankName + rawBody)
         return ParsedSms(
             amount        = amount,
             type          = type,

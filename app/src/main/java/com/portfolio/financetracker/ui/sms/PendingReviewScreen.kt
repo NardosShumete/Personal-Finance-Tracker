@@ -47,6 +47,7 @@ fun PendingReviewScreen(
 ) {
     val uiState     by viewModel.uiState.collectAsState()
     val pending     by viewModel.pendingTransactions.collectAsState()
+    val syncProgress by viewModel.syncProgress.collectAsState()
     val snackbar    = remember { SnackbarHostState() }
 
     // Show snackbar when sync message arrives
@@ -55,6 +56,36 @@ fun PendingReviewScreen(
             snackbar.showSnackbar(it)
             viewModel.clearMessage()
         }
+    }
+
+    var showConfirmAllDialog by remember { mutableStateOf(false) }
+
+    if (showConfirmAllDialog) {
+        val totalIncome = pending.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }
+        val totalExpense = pending.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
+        AlertDialog(
+            onDismissRequest = { showConfirmAllDialog = false },
+            title = { Text("Confirm All Transactions") },
+            text = {
+                Text("${pending.size} transactions\n+ETB ${"%.2f".format(totalIncome)} income\n-ETB ${"%.2f".format(totalExpense)} expenses")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.confirmAll()
+                    showConfirmAllDialog = false
+                }) {
+                    Text("Confirm All", color = NeonGreen)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmAllDialog = false }) {
+                    Text("Cancel", color = Color.White.copy(0.5f))
+                }
+            },
+            containerColor = GlassBg,
+            titleContentColor = Color.White,
+            textContentColor = Color.White.copy(0.8f)
+        )
     }
 
     // Edit sheet
@@ -95,47 +126,68 @@ fun PendingReviewScreen(
                     badge       = pending.size,
                     onBack      = onNavigateBack,
                     onSyncHistory = viewModel::syncHistory,
-                    onConfirmAll  = { if (pending.isNotEmpty()) viewModel.confirmAll() },
+                    onConfirmAll  = { if (pending.isNotEmpty()) showConfirmAllDialog = true },
                     isSyncing   = uiState.isSyncing
                 )
             }
         ) { padding ->
-            if (pending.isEmpty()) {
+            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                if (syncProgress != null) {
+                    LinearProgressIndicator(
+                        progress = { syncProgress ?: 0f },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = NeonGreen,
+                        trackColor = Color.White.copy(alpha = 0.1f)
+                    )
+                }
+                
+                if (pending.isEmpty()) {
                 EmptyPendingState(modifier = Modifier.padding(padding))
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    item {
-                        // Info banner
-                        GlassBanner(
-                            text = "${pending.size} transaction${if (pending.size > 1) "s" else ""} " +
-                                   "detected from bank SMS. Review before they affect your balance."
-                        )
-                    }
-
-                    items(pending, key = { it.id }) { transaction ->
-                        AnimatedVisibility(
-                            visible = true,
-                            enter   = fadeIn() + slideInVertically(
-                                initialOffsetY = { it / 2 },
-                                animationSpec  = spring(dampingRatio = 0.7f)
-                            )
-                        ) {
-                            ApprovalCard(
-                                transaction = transaction,
-                                onConfirm   = { viewModel.confirm(transaction) },
-                                onEdit      = { viewModel.startEdit(transaction) },
-                                onDismiss   = { viewModel.dismiss(transaction) }
+                } else {
+                    val groupedPending = pending.groupBy { it.category.substringBefore(" ") }
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        item {
+                            GlassBanner(
+                                text = "${pending.size} transaction${if (pending.size > 1) "s" else ""} " +
+                                       "detected from bank SMS. Review before they affect your balance."
                             )
                         }
-                    }
 
-                    item { Spacer(modifier = Modifier.height(32.dp)) }
+                        groupedPending.forEach { (bankName, transactions) ->
+                            item {
+                                Text(
+                                    text = bankName,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = NeonGreen,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                                )
+                            }
+                            items(transactions, key = { it.id }) { transaction ->
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter   = fadeIn() + slideInVertically(
+                                        initialOffsetY = { it / 2 },
+                                        animationSpec  = spring(dampingRatio = 0.7f)
+                                    )
+                                ) {
+                                    ApprovalCard(
+                                        transaction = transaction,
+                                        onConfirm   = { viewModel.confirm(transaction) },
+                                        onEdit      = { viewModel.startEdit(transaction) },
+                                        onDismiss   = { viewModel.dismiss(transaction) }
+                                    )
+                                }
+                            }
+                        }
+
+                        item { Spacer(modifier = Modifier.height(32.dp)) }
+                    }
                 }
             }
         }
@@ -231,6 +283,7 @@ fun ApprovalCard(
     onEdit: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
     val isIncome   = transaction.type == TransactionType.INCOME
     val accentColor = if (isIncome) NeonGreen else NeonRose
     val dateFormat  = SimpleDateFormat("MMM dd, yyyy · HH:mm", Locale.getDefault())
@@ -376,6 +429,37 @@ fun ApprovalCard(
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White.copy(alpha = 0.8f)
                     )
+                }
+            }
+            
+            // Raw SMS Expansion
+            if (transaction.rawSms != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                TextButton(
+                    onClick = { isExpanded = !isExpanded },
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Text(
+                        if (isExpanded) "Hide original SMS" else "Show original SMS", 
+                        color = accentColor, 
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+                
+                AnimatedVisibility(visible = isExpanded) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White.copy(alpha = 0.05f))
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = transaction.rawSms,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.6f)
+                        )
+                    }
                 }
             }
 

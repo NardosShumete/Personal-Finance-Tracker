@@ -3,6 +3,7 @@ package com.portfolio.financetracker.di
 import android.app.Application
 import androidx.room.Room
 import com.portfolio.financetracker.data.local.FinanceDatabase
+import com.portfolio.financetracker.data.local.MIGRATION_6_7
 import com.portfolio.financetracker.data.repository.TransactionRepositoryImpl
 import com.portfolio.financetracker.domain.repository.TransactionRepository
 import dagger.Module
@@ -22,7 +23,7 @@ object AppModule {
             app,
             FinanceDatabase::class.java,
             FinanceDatabase.DATABASE_NAME
-        ).fallbackToDestructiveMigration().build()
+        ).addMigrations(MIGRATION_6_7).build()
     }
 
     @Provides
@@ -31,7 +32,7 @@ object AppModule {
         db: FinanceDatabase,
         dataStoreManager: com.portfolio.financetracker.data.local.DataStoreManager
     ): TransactionRepository {
-        return TransactionRepositoryImpl(db.transactionDao, dataStoreManager)
+        return TransactionRepositoryImpl(db.transactionDao, db.bankAccountDao, dataStoreManager)
     }
 
     @Provides
