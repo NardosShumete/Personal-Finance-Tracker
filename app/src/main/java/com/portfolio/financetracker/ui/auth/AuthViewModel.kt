@@ -19,7 +19,7 @@ import javax.inject.Inject
 
 data class AuthUiState(
     val isLoading: Boolean    = false,
-    val errorMessage: String? = null,   // Firebase / network level error
+    val errorMessage: String? = null,
     val isSuccess: Boolean    = false,
     val isLoginMode: Boolean  = true,
 
@@ -124,9 +124,6 @@ class AuthViewModel @Inject constructor(
         password: String?,
         username: String?
     ): Boolean {
-        // A field is "valid" if its error is null AND it's non-empty
-        // We can't check emptiness here without the actual field values,
-        // so we rely on the error being null as the proxy for validity.
         return state.emailError == null &&
                state.passwordError == null &&
                (state.isLoginMode || state.usernameError == null)
@@ -135,7 +132,6 @@ class AuthViewModel @Inject constructor(
     // ── Auth actions ──────────────────────────────────────────────────────────
 
     fun signIn(email: String, password: String) {
-        // Run full validation + sanitization before touching Firebase
         val validation = authUseCases.validateAuthInput.validateLogin(email, password)
 
         if (!validation.isValid) {
@@ -151,14 +147,13 @@ class AuthViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            // Use sanitized values — trimmed + lowercased email
             authUseCases.signIn(validation.sanitizedEmail, validation.sanitizedPassword)
                 .onSuccess {
                     _uiState.update { it.copy(isLoading = false, isSuccess = true) }
                 }
                 .onFailure { e ->
                     _uiState.update {
-                        it.copy(isLoading = false, errorMessage = friendlyMessage(e))
+                        it.copy(isLoading = false, errorMessage = e.message ?: "Login failed")
                     }
                 }
         }
@@ -191,7 +186,7 @@ class AuthViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     _uiState.update {
-                        it.copy(isLoading = false, errorMessage = friendlyMessage(e))
+                        it.copy(isLoading = false, errorMessage = e.message ?: "Registration failed")
                     }
                 }
         }
@@ -212,7 +207,7 @@ class AuthViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     _resetState.update {
-                        it.copy(isLoading = false, errorMessage = friendlyMessage(e))
+                        it.copy(isLoading = false, errorMessage = e.message ?: "Reset failed")
                     }
                 }
         }
@@ -239,21 +234,5 @@ class AuthViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.update { it.copy(errorMessage = null) }
-    }
-
-    private fun friendlyMessage(e: Throwable): String {
-        val msg = e.message ?: return "Something went wrong. Please try again."
-        return when {
-            msg.contains("no user record",       ignoreCase = true) -> "No account found with that email."
-            msg.contains("badly formatted",      ignoreCase = true) -> "Please enter a valid email address."
-            msg.contains("invalid-email",        ignoreCase = true) -> "Please enter a valid email address."
-            msg.contains("user-not-found",       ignoreCase = true) -> "No account found with that email."
-            msg.contains("wrong-password",       ignoreCase = true) -> "Incorrect password. Please try again."
-            msg.contains("email-already-in-use", ignoreCase = true) -> "An account with this email already exists."
-            msg.contains("weak-password",        ignoreCase = true) -> "Password must be at least 8 characters."
-            msg.contains("network",              ignoreCase = true) -> "Network error. Check your connection."
-            msg.contains("too-many-requests",    ignoreCase = true) -> "Too many attempts. Please try again later."
-            else -> msg
-        }
     }
 }

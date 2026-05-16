@@ -3,8 +3,11 @@ package com.portfolio.financetracker.di
 import android.app.Application
 import androidx.room.Room
 import com.portfolio.financetracker.data.local.FinanceDatabase
+import com.portfolio.financetracker.data.local.dao.ReminderDao
 import com.portfolio.financetracker.data.repository.TransactionRepositoryImpl
+import com.portfolio.financetracker.data.repository.ReminderRepositoryImpl
 import com.portfolio.financetracker.domain.repository.TransactionRepository
+import com.portfolio.financetracker.domain.repository.ReminderRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -38,6 +41,12 @@ object AppModule {
     @Singleton
     fun provideGoalRepository(db: FinanceDatabase): com.portfolio.financetracker.domain.repository.GoalRepository {
         return com.portfolio.financetracker.data.repository.GoalRepositoryImpl(db.monthlyGoalDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideReminderRepository(db: FinanceDatabase): ReminderRepository {
+        return ReminderRepositoryImpl(db.reminderDao)
     }
 
     @Provides

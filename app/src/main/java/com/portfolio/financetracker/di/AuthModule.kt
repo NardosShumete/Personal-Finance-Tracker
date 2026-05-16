@@ -1,6 +1,5 @@
 package com.portfolio.financetracker.di
 
-import com.google.firebase.auth.FirebaseAuth
 import com.portfolio.financetracker.data.local.DataStoreManager
 import com.portfolio.financetracker.data.repository.AuthRepositoryImpl
 import com.portfolio.financetracker.domain.repository.AuthRepository
@@ -23,14 +22,9 @@ object AuthModule {
 
     @Provides
     @Singleton
-    fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
-
-    @Provides
-    @Singleton
     fun provideAuthRepository(
-        firebaseAuth: FirebaseAuth,
         dataStore: DataStoreManager
-    ): AuthRepository = AuthRepositoryImpl(firebaseAuth, dataStore)
+    ): AuthRepository = AuthRepositoryImpl(dataStore)
 
     @Provides
     @Singleton
