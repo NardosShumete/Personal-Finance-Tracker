@@ -77,6 +77,12 @@ fun AppDrawer(
             onClick = { onNavigateTo(Screen.DashboardScreen.route) }
         )
         DrawerItem(
+            icon = Icons.Default.CalendarMonth,
+            label = "Calendar & Reminders",
+            selected = currentRoute == Screen.CalendarScreen.route,
+            onClick = { onNavigateTo(Screen.CalendarScreen.route) }
+        )
+        DrawerItem(
             icon = Icons.Default.BarChart,
             label = "Charts",
             selected = currentRoute == Screen.ChartsScreen.route,

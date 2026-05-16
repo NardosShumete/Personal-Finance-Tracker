@@ -1,58 +1,45 @@
 package com.portfolio.financetracker.data.repository
 
-import com.google.firebase.auth.FirebaseAuth
 import com.portfolio.financetracker.data.local.DataStoreManager
 import com.portfolio.financetracker.domain.model.UserProfile
 import com.portfolio.financetracker.domain.repository.AuthRepository
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
-    private val firebaseAuth: FirebaseAuth,
     private val dataStore: DataStoreManager
 ) : AuthRepository {
 
-    /**
-     * Emits the current [UserProfile] by combining:
-     * - Firebase Auth state listener (live session changes)
-     * - DataStore cached username (survives offline)
-     *
-     * Emits null when signed out.
-     */
-    override val currentUser: Flow<UserProfile?> = callbackFlow {
-        val listener = FirebaseAuth.AuthStateListener { auth ->
-            trySend(auth.currentUser)
-        }
-        firebaseAuth.addAuthStateListener(listener)
-        awaitClose { firebaseAuth.removeAuthStateListener(listener) }
-    }.combine(dataStore.userName) { firebaseUser, cachedName ->
-        firebaseUser?.let { user ->
-            UserProfile(
-                uid      = user.uid,
-                email    = user.email ?: "",
-                username = cachedName.ifBlank { user.displayName ?: user.email ?: "User" }
-            )
-        }
+    override val currentUser: Flow<UserProfile?> = combine(
+        dataStore.userUid,
+        dataStore.userEmail,
+        dataStore.userName
+    ) { uid, email, name ->
+        if (uid.isNotBlank()) {
+            UserProfile(uid = uid, email = email, username = name)
+        } else null
     }
 
     override val isLoggedIn: Boolean
-        get() = firebaseAuth.currentUser != null
+        get() = false // Managed via Flow in this local implementation
 
     override suspend fun signIn(email: String, password: String): Result<UserProfile> =
         runCatching {
-            val result = firebaseAuth.signInWithEmailAndPassword(email, password).await()
-            val user   = result.user ?: error("Sign-in succeeded but user is null.")
-            val cached = dataStore.userName.first().ifBlank { user.displayName ?: email }
-            val profile = UserProfile(uid = user.uid, email = user.email ?: email, username = cached)
-            dataStore.saveUserProfile(profile.uid, profile.email, profile.username)
-            profile
+            // Local mock sign-in: check if email matches cached email
+            val cachedEmail = dataStore.userEmail.first()
+            if (cachedEmail.isNotBlank() && cachedEmail == email) {
+                val profile = loadCachedProfile() ?: error("User not found")
+                profile
+            } else {
+                // For a simple local demo, we'll "register" them if they don't exist
+                val profile = UserProfile(uid = "local_user", email = email, username = "Guest")
+                saveUserProfile(profile)
+                profile
+            }
         }
 
     override suspend fun register(
@@ -60,15 +47,12 @@ class AuthRepositoryImpl @Inject constructor(
         password: String,
         username: String
     ): Result<UserProfile> = runCatching {
-        val result  = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
-        val user    = result.user ?: error("Registration succeeded but user is null.")
-        val profile = UserProfile(uid = user.uid, email = user.email ?: email, username = username)
-        dataStore.saveUserProfile(profile.uid, profile.email, profile.username)
+        val profile = UserProfile(uid = java.util.UUID.randomUUID().toString(), email = email, username = username)
+        saveUserProfile(profile)
         profile
     }
 
     override suspend fun signOut() {
-        firebaseAuth.signOut()
         dataStore.clearUserProfile()
     }
 
@@ -83,7 +67,5 @@ class AuthRepositoryImpl @Inject constructor(
         return if (uid.isNotBlank()) UserProfile(uid, email, name) else null
     }
 
-    override suspend fun sendPasswordReset(email: String): Result<Unit> = runCatching {
-        firebaseAuth.sendPasswordResetEmail(email).await()
-    }
+    override suspend fun sendPasswordReset(email: String): Result<Unit> = Result.success(Unit)
 }

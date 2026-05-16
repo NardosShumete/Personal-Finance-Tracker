@@ -6,6 +6,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.portfolio.financetracker.core.worker.BudgetAlertWorker
 import com.portfolio.financetracker.core.worker.WeeklyReportWorker
+import com.portfolio.financetracker.core.worker.ReminderWorker
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
@@ -36,6 +37,16 @@ object NotificationScheduler {
             "BudgetMonitorAlert",
             ExistingPeriodicWorkPolicy.UPDATE,
             budgetMonitorRequest
+        )
+
+        // Queue Reminders Check every 1 hour
+        val reminderRequest = PeriodicWorkRequestBuilder<ReminderWorker>(1, TimeUnit.HOURS)
+            .build()
+
+        workManager.enqueueUniquePeriodicWork(
+            "FinanceReminders",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            reminderRequest
         )
     }
 
