@@ -21,6 +21,19 @@ import com.portfolio.financetracker.ui.charts.ChartsScreen
 import com.portfolio.financetracker.ui.dashboard.DashboardScreen
 import com.portfolio.financetracker.ui.transaction.AddTransactionScreen
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 
 @Composable
 fun FinanceNavGraph(
@@ -85,9 +98,25 @@ fun FinanceNavGraph(
                         else Screen.AddEditTransactionScreen.route
                         navController.navigate(route)
                     },
+                    onNavigateToTransactions = {
+                        navController.navigate(Screen.TransactionsScreen.route)
+                    },
                     onNavigateToCharts = { navController.navigate(Screen.ChartsScreen.route) },
                     onNavigateToSettings = { navController.navigate(Screen.SettingsScreen.route) },
                     onOpenDrawer = { scope.launch { drawerState.open() } }
+                )
+            }
+
+            // ── All Transactions ──────────────────────────────────────────────
+            composable(route = Screen.TransactionsScreen.route) {
+                com.portfolio.financetracker.ui.dashboard.TransactionsScreen(
+                    onNavigateToAddTransaction = { transactionId ->
+                        val route = if (transactionId != null)
+                            "${Screen.AddEditTransactionScreen.route}?transactionId=$transactionId"
+                        else Screen.AddEditTransactionScreen.route
+                        navController.navigate(route)
+                    },
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 
@@ -147,6 +176,46 @@ fun FinanceNavGraph(
                     onSetupComplete   = { navController.popBackStack() }
                 )
             }
+
+            // ── Calendar & Reminders ──────────────────────────────────────────
+            composable(route = Screen.CalendarScreen.route) {
+                PlaceholderScreen(
+                    title = "Calendar & Reminders",
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // ── Insights ──────────────────────────────────────────────────────
+            composable(route = Screen.InsightsScreen.route) {
+                PlaceholderScreen(
+                    title = "Insights",
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PlaceholderScreen(title: String, onNavigateBack: () -> Unit) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(title) },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Box(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("$title — coming soon")
         }
     }
 }

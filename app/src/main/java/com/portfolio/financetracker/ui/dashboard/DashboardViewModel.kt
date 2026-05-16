@@ -68,12 +68,27 @@ class DashboardViewModel @Inject constructor(
         val income  = filtered.filter { it.type == TransactionType.INCOME  }.sumOf { it.amount }
         val expense = filtered.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
 
+        val bankBalances = allTransactions
+            .filter { it.bankName != null }
+            .groupBy { it.bankName!! }
+            .mapValues { (bankName, transactions) ->
+                val bankIncome = transactions.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }
+                val bankExpense = transactions.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
+                BankBalance(
+                    name = bankName,
+                    balance = bankIncome - bankExpense,
+                    income = bankIncome,
+                    expense = bankExpense
+                )
+            }
+
         DashboardState(
             totalBalance = income - expense,
             totalIncome  = income,
             totalExpense = expense,
             searchQuery  = query,
-            monthlyGoal  = goal
+            monthlyGoal  = goal,
+            bankBalances = bankBalances
         )
     }.stateIn(
         scope            = viewModelScope,
