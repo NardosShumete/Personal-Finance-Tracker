@@ -83,6 +83,12 @@ fun AppDrawer(
             onClick = { onNavigateTo(Screen.ChartsScreen.route) }
         )
         DrawerItem(
+            icon = Icons.Default.Lightbulb,
+            label = "Insights",
+            selected = currentRoute == Screen.InsightsScreen.route,
+            onClick = { onNavigateTo(Screen.InsightsScreen.route) }
+        )
+        DrawerItem(
             icon = Icons.Default.Settings,
             label = "Settings",
             selected = currentRoute == Screen.SettingsScreen.route,

@@ -19,6 +19,7 @@ import com.portfolio.financetracker.ui.auth.AuthViewModel
 import com.portfolio.financetracker.ui.auth.LoginScreen
 import com.portfolio.financetracker.ui.charts.ChartsScreen
 import com.portfolio.financetracker.ui.dashboard.DashboardScreen
+import com.portfolio.financetracker.ui.insights.InsightsScreen
 import com.portfolio.financetracker.ui.transaction.AddTransactionScreen
 import kotlinx.coroutines.launch
 
@@ -107,6 +108,11 @@ fun FinanceNavGraph(
             // ── Charts ────────────────────────────────────────────────────────
             composable(route = Screen.ChartsScreen.route) {
                 ChartsScreen(onNavigateBack = { navController.popBackStack() })
+            }
+
+            // ── Insights ──────────────────────────────────────────────────────
+            composable(route = Screen.InsightsScreen.route) {
+                InsightsScreen(onNavigateBack = { navController.popBackStack() })
             }
 
             // ── Settings ──────────────────────────────────────────────────────
