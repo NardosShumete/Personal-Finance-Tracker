@@ -66,12 +66,29 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
 }
 
 /**
- * Migration 7 → 8: adds bankName column to transaction_table.
- * Stores the exact bank name from the parser so we never have to
- * guess it from the category string (fixes the CBE/BOA merge bug).
+ * Migration 7 → 8: adds bankName column to transaction_table + reminder_table.
  */
 val MIGRATION_7_8 = object : Migration(7, 8) {
     override fun migrate(db: SupportSQLiteDatabase) {
+        // Fix CBE/BOA merge bug — store exact bank name from parser
         db.execSQL("ALTER TABLE `transaction_table` ADD COLUMN `bankName` TEXT")
+
+        // reminder_table — calendar reminders and scheduled transactions
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `reminder_table` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `title` TEXT NOT NULL,
+                `amount` REAL NOT NULL,
+                `date` INTEGER NOT NULL,
+                `type` TEXT NOT NULL,
+                `category` TEXT NOT NULL DEFAULT 'General',
+                `isCompleted` INTEGER NOT NULL DEFAULT 0,
+                `repeatInterval` TEXT NOT NULL DEFAULT 'NONE',
+                `autoGenerateExpense` INTEGER NOT NULL DEFAULT 1,
+                `syncToGoogleCalendar` INTEGER NOT NULL DEFAULT 0
+            )
+            """.trimIndent()
+        )
     }
 }

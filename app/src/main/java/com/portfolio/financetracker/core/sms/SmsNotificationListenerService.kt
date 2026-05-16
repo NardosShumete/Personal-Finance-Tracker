@@ -5,8 +5,6 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import com.portfolio.financetracker.core.worker.SmsProcessWorker
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 /**
  * Task 9 — Notification Listener Fallback
@@ -14,12 +12,12 @@ import javax.inject.Inject
  * For users who deny SMS permissions or use devices that restrict SMS reading,
  * we can intercept notifications from bank apps (like Telebirr or CBE app).
  * The notification text is routed through our existing parser pipeline.
+ *
+ * NOTE: @AndroidEntryPoint is intentionally NOT used here — Hilt does not
+ * support NotificationListenerService. Since we only call SmsProcessWorker
+ * (which uses applicationContext), no injection is needed.
  */
-@AndroidEntryPoint
 class SmsNotificationListenerService : NotificationListenerService() {
-
-    // Injecting dependencies in a Service requires @AndroidEntryPoint
-    // We will just enqueue the SmsProcessWorker to reuse the existing pipeline.
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         val packageName = sbn.packageName
