@@ -91,10 +91,8 @@ class MainActivity : FragmentActivity() {
                     val isBioEnabled    by biometricViewModel.isBiometricEnabled.collectAsState()
                     val isAuthenticated by biometricViewModel.isAuthenticated.collectAsState()
 
-                    // Determine start destination based on Firebase session
-                    val startDestination = if (authViewModel.currentUser.collectAsState().value != null
-                        || com.google.firebase.auth.FirebaseAuth.getInstance().currentUser != null
-                    ) {
+                    // Determine start destination based on local session
+                    val startDestination = if (authViewModel.currentUser.collectAsState().value != null) {
                         Screen.DashboardScreen.route
                     } else {
                         Screen.LoginScreen.route
