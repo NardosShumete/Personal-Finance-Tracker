@@ -29,7 +29,12 @@ class SmsHistorySyncWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         val limit = inputData.getInt(KEY_LIMIT, 200)
         return try {
-            val count = repository.syncSmsHistory(context, limit)
+            val count = repository.syncSmsHistory(context, limit) { processed, total ->
+                setProgress(workDataOf(
+                    "progress" to processed,
+                    "max" to total
+                ))
+            }
             Log.i(TAG, "Historical sync complete — $count new transactions")
             Result.success(workDataOf(KEY_INSERTED_COUNT to count))
         } catch (e: Exception) {

@@ -5,8 +5,10 @@ import com.portfolio.financetracker.core.sms.parsers.AwashSmsParser
 import com.portfolio.financetracker.core.sms.parsers.CbeSmsParser
 import com.portfolio.financetracker.core.sms.parsers.DashenSmsParser
 import com.portfolio.financetracker.core.sms.parsers.TelebirrSmsParser
+import com.portfolio.financetracker.core.sms.parsers.DynamicBankSmsParser
 import com.portfolio.financetracker.core.util.AmountParser.toSafeAmount
 import com.portfolio.financetracker.core.util.SmsTimestampParser
+import com.portfolio.financetracker.data.local.entity.CustomBankEntity
 import com.portfolio.financetracker.domain.model.TransactionType
 
 /**
@@ -70,7 +72,22 @@ object BankSmsParserFactory {
         SmsParser.BankFormat.ABYSSINIA to AbyssiniaSmsParser
     )
 
+    private val dynamicParsers = mutableMapOf<String, BankSmsParser>()
+
     fun get(format: SmsParser.BankFormat): BankSmsParser? = parsers[format]
+
+    fun getDynamic(sender: String): BankSmsParser? {
+        return dynamicParsers.entries.firstOrNull { 
+            sender.contains(it.key, ignoreCase = true) || it.key.contains(sender, ignoreCase = true)
+        }?.value
+    }
+
+    fun setDynamicParsers(customBanks: List<CustomBankEntity>) {
+        dynamicParsers.clear()
+        customBanks.filter { it.isEnabled }.forEach { bank ->
+            dynamicParsers[bank.senderAddress.lowercase()] = DynamicBankSmsParser(bank)
+        }
+    }
 }
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
@@ -100,7 +117,7 @@ internal fun buildParsedSms(
 
     val typeLabel = if (type == TransactionType.INCOME) "Received" else "Sent"
     val note  = "$typeLabel ETB ${"%.2f".format(amount)} · $bankName"
-    val hash  = sha256("$amount|${type.name}|${timestampMs / 60_000}|$bankName")
+    val hash  = sha256(sender + body)
 
     return ParseResult.Success(
         SmsParser.ParsedSms(

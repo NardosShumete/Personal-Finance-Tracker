@@ -49,5 +49,9 @@ interface TransactionRepository {
      * and inserts only new ones (deduped by smsId + smsHash).
      * Returns the count of newly inserted transactions.
      */
-    suspend fun syncSmsHistory(context: android.content.Context, limitPerSender: Int = 200): Int
+    suspend fun syncSmsHistory(
+        context: android.content.Context, 
+        limitPerSender: Int = 200,
+        onProgress: suspend (Int, Int) -> Unit = { _, _ -> }
+    ): Int
 }

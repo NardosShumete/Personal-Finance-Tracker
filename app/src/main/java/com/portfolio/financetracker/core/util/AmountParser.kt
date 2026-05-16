@@ -50,12 +50,16 @@ object AmountParser {
     fun parse(raw: String): AmountResult {
         if (raw.isBlank()) return AmountResult.Failure("Empty amount string")
 
-        val sanitized = raw
-            .trim()
-            .removePrefix("-")          // strip negative sign — type carries direction
-            .replace(Regex("[,\\s]"), "") // remove commas and whitespace
-            .replace(Regex("^[A-Za-z]+\\s*"), "") // strip currency prefix (ETB, USD, etc.)
-            .trim()
+        var sanitized = raw.trim()
+            
+        // Remove currency symbols/words (ETB, Birr, USD, etc) from anywhere
+        sanitized = sanitized.replace(Regex("(?i)[a-z]+"), "")
+        
+        // Remove commas and whitespace
+        sanitized = sanitized.replace(Regex("[,\\s]"), "")
+        
+        // Strip negative sign (type carries direction)
+        sanitized = sanitized.removePrefix("-")
 
         if (sanitized.isEmpty()) return AmountResult.Failure("Amount is empty after sanitization: '$raw'")
 
