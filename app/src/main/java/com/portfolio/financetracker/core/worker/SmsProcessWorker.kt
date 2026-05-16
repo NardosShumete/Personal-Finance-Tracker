@@ -4,9 +4,11 @@ import android.content.Context
 import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.*
+import com.portfolio.financetracker.data.local.dao.BankAccountDao
 import com.portfolio.financetracker.domain.use_case.ProcessSmsUseCase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.flow.first
 import java.util.concurrent.TimeUnit
 
 /**
@@ -28,13 +30,19 @@ import java.util.concurrent.TimeUnit
 class SmsProcessWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
-    private val processSmsUseCase: ProcessSmsUseCase
+    private val processSmsUseCase: ProcessSmsUseCase,
+    private val bankAccountDao: BankAccountDao
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
         val sender     = inputData.getString(KEY_SENDER)     ?: return Result.failure()
         val body       = inputData.getString(KEY_BODY)       ?: return Result.failure()
         val receivedAt = inputData.getLong(KEY_RECEIVED_AT, 0L)
+
+        // Only process if the bank is connected
+        val accounts = bankAccountDao.getAllBankAccounts().first()
+        val isConnected = accounts.any { it.smsSenderId.equals(sender, ignoreCase = true) && it.isConnected }
+        if (!isConnected) return Result.success()
 
         return try {
             processSmsUseCase(sender, body, receivedAt)

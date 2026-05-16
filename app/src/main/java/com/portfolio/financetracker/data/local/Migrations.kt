@@ -5,7 +5,6 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 /**
  * Migration 5 → 6: adds SMS columns to transaction_table
- * (source, rawSms, smsBalance, smsHash, smsId, isPending)
  */
 val MIGRATION_5_6 = object : Migration(5, 6) {
     override fun migrate(db: SupportSQLiteDatabase) {
@@ -25,7 +24,6 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
  */
 val MIGRATION_6_7 = object : Migration(6, 7) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        // custom_bank_table — user-defined bank configurations
         db.execSQL(
             """
             CREATE TABLE IF NOT EXISTS `custom_bank_table` (
@@ -41,25 +39,26 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
             """.trimIndent()
         )
 
-        // bank_account_table — per-bank balance tracking
         db.execSQL(
             """
             CREATE TABLE IF NOT EXISTS `bank_account_table` (
                 `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                `bankName` TEXT NOT NULL,
-                `senderAddress` TEXT NOT NULL,
-                `lastKnownBalance` REAL NOT NULL,
-                `lastUpdated` INTEGER NOT NULL,
-                `totalTransactions` INTEGER NOT NULL,
-                `colorHex` TEXT NOT NULL
+                `shortName` TEXT NOT NULL,
+                `fullName` TEXT NOT NULL,
+                `smsSenderId` TEXT NOT NULL,
+                `colorHex` TEXT NOT NULL,
+                `isConnected` INTEGER NOT NULL,
+                `totalIncome` REAL NOT NULL,
+                `totalExpense` REAL NOT NULL,
+                `transactionCount` INTEGER NOT NULL
             )
             """.trimIndent()
         )
 
         db.execSQL(
             """
-            CREATE UNIQUE INDEX IF NOT EXISTS `index_bank_account_table_bankName`
-            ON `bank_account_table` (`bankName`)
+            CREATE UNIQUE INDEX IF NOT EXISTS `index_bank_account_table_shortName`
+            ON `bank_account_table` (`shortName`)
             """.trimIndent()
         )
     }
@@ -70,10 +69,8 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
  */
 val MIGRATION_7_8 = object : Migration(7, 8) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        // Fix CBE/BOA merge bug — store exact bank name from parser
         db.execSQL("ALTER TABLE `transaction_table` ADD COLUMN `bankName` TEXT")
 
-        // reminder_table — calendar reminders and scheduled transactions
         db.execSQL(
             """
             CREATE TABLE IF NOT EXISTS `reminder_table` (
@@ -82,11 +79,11 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
                 `amount` REAL NOT NULL,
                 `date` INTEGER NOT NULL,
                 `type` TEXT NOT NULL,
-                `category` TEXT NOT NULL DEFAULT 'General',
-                `isCompleted` INTEGER NOT NULL DEFAULT 0,
-                `repeatInterval` TEXT NOT NULL DEFAULT 'NONE',
-                `autoGenerateExpense` INTEGER NOT NULL DEFAULT 1,
-                `syncToGoogleCalendar` INTEGER NOT NULL DEFAULT 0
+                `category` TEXT NOT NULL,
+                `isCompleted` INTEGER NOT NULL,
+                `repeatInterval` TEXT NOT NULL,
+                `autoGenerateExpense` INTEGER NOT NULL,
+                `syncToGoogleCalendar` INTEGER NOT NULL
             )
             """.trimIndent()
         )

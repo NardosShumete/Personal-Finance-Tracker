@@ -100,23 +100,15 @@ class TransactionRepositoryImpl(
         val transaction = dao.getTransactionById(id) ?: return
         dao.confirmTransaction(id)
         
-        if (transaction.source == "SMS" && transaction.smsBalance != null) {
-            val bankName = transaction.category.substringBefore(" Transfer").trim()
+        if (transaction.source == "SMS") {
+            val bankName = transaction.bankName ?: transaction.category.substringBefore(" Transfer").trim()
             if (bankName.isNotEmpty()) {
-                val account = bankAccountDao.getBankAccountByName(bankName)
-                if (account == null) {
-                    bankAccountDao.insertBankAccount(
-                        BankAccountEntity(
-                            bankName = bankName,
-                            senderAddress = "UNKNOWN", // Fallback if not tracked
-                            lastKnownBalance = transaction.smsBalance,
-                            lastUpdated = transaction.date,
-                            totalTransactions = 1,
-                            colorHex = "#10B981" // Default accent color
-                        )
-                    )
-                } else {
-                    bankAccountDao.updateBalanceAndCount(bankName, transaction.smsBalance, transaction.date)
+                val income = if (transaction.type == "INCOME") transaction.amount else 0.0
+                val expense = if (transaction.type == "EXPENSE") transaction.amount else 0.0
+                
+                val account = bankAccountDao.getBankAccountByShortName(bankName)
+                if (account != null) {
+                    bankAccountDao.updateTotals(bankName, income, expense)
                 }
             }
         }
