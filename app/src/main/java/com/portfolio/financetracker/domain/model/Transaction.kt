@@ -1,9 +1,13 @@
 package com.portfolio.financetracker.domain.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class RecurringPeriod {
     NONE, WEEKLY, MONTHLY
 }
 
+@Serializable
 data class Transaction(
     val id: Int = 0,
     val amount: Double,
