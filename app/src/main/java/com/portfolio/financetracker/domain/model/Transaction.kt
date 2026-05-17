@@ -37,5 +37,11 @@ data class Transaction(
      * True when this transaction is waiting for user confirmation.
      * SMS-parsed transactions start as pending; user confirms or edits them.
      */
-    val isPending: Boolean = false
+    val isPending: Boolean = false,
+    /**
+     * The exact bank name from the parser (e.g. "CBE", "Abyssinia", "Telebirr").
+     * Stored directly so we never have to guess it from the category string.
+     * Null for MANUAL entries.
+     */
+    val bankName: String? = null
 )

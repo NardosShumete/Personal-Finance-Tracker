@@ -36,5 +36,7 @@ data class TransactionEntity(
     /** Content Provider _id — secondary dedup key for historical sync */
     val smsId: String? = null,
     /** True = waiting for user confirmation in the Pending Review screen */
-    val isPending: Boolean = false
+    val isPending: Boolean = false,
+    /** Exact bank name from parser — never guessed from category string */
+    val bankName: String? = null
 )
