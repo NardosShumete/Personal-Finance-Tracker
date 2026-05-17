@@ -31,25 +31,38 @@ object SmsTimestampParser {
 
     // Ordered by specificity — most specific (with time) tried first
     private val DATE_FORMATS = listOf(
+        // With time and 'at'
+        SimpleDateFormat("dd/MM/yyyy 'at' HH:mm", Locale.ENGLISH).apply { timeZone = EAT },
+        SimpleDateFormat("dd/MM/yyyy 'at' hh:mm a", Locale.ENGLISH).apply { timeZone = EAT },
         // With time
         SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.ENGLISH).apply { timeZone = EAT },
         SimpleDateFormat("dd/MM/yyyy HH:mm",    Locale.ENGLISH).apply { timeZone = EAT },
+        SimpleDateFormat("dd/MM/yyyy hh:mm a",  Locale.ENGLISH).apply { timeZone = EAT },
         SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.ENGLISH).apply { timeZone = EAT },
         SimpleDateFormat("dd-MM-yyyy HH:mm",    Locale.ENGLISH).apply { timeZone = EAT },
+        SimpleDateFormat("dd-MM-yyyy hh:mm a",  Locale.ENGLISH).apply { timeZone = EAT },
         SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH).apply { timeZone = EAT },
         SimpleDateFormat("yyyy-MM-dd HH:mm",    Locale.ENGLISH).apply { timeZone = EAT },
+        SimpleDateFormat("yyyy-MM-dd hh:mm a",  Locale.ENGLISH).apply { timeZone = EAT },
         // Date only — time defaults to 00:00:00 EAT
         SimpleDateFormat("dd/MM/yyyy",          Locale.ENGLISH).apply { timeZone = EAT },
         SimpleDateFormat("dd-MM-yyyy",          Locale.ENGLISH).apply { timeZone = EAT },
         SimpleDateFormat("dd-MMM-yyyy",         Locale.ENGLISH).apply { timeZone = EAT },
         SimpleDateFormat("yyyy-MM-dd",          Locale.ENGLISH).apply { timeZone = EAT },
-        SimpleDateFormat("dd MMM yyyy",         Locale.ENGLISH).apply { timeZone = EAT }
+        SimpleDateFormat("dd MMM yyyy",         Locale.ENGLISH).apply { timeZone = EAT },
+        // Time only
+        SimpleDateFormat("'at' hh:mm a",        Locale.ENGLISH).apply { timeZone = EAT },
+        SimpleDateFormat("'at' HH:mm",          Locale.ENGLISH).apply { timeZone = EAT },
+        SimpleDateFormat("hh:mm a",             Locale.ENGLISH).apply { timeZone = EAT },
+        SimpleDateFormat("HH:mm",               Locale.ENGLISH).apply { timeZone = EAT }
     )
 
     // Regex to find date-like strings in SMS body
     private val DATE_CANDIDATES = listOf(
-        Regex("""\b(\d{2}[/\-]\d{2}[/\-]\d{4}\s+\d{2}:\d{2}(?::\d{2})?)\b"""),
-        Regex("""\b(\d{4}[/\-]\d{2}[/\-]\d{2}\s+\d{2}:\d{2}(?::\d{2})?)\b"""),
+        Regex("""\b(\d{2}[/\-]\d{2}[/\-]\d{4}\s+(?:at\s+)?\d{2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?)\b"""),
+        Regex("""\b(\d{4}[/\-]\d{2}[/\-]\d{2}\s+(?:at\s+)?\d{2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?)\b"""),
+        Regex("""\b(at\s+\d{2}:\d{2}(?:\s*[AaPp][Mm])?)\b"""),
+        Regex("""\b(\d{2}:\d{2}\s*[AaPp][Mm])\b"""),
         Regex("""\b(\d{2}[/\-]\d{2}[/\-]\d{4})\b"""),
         Regex("""\b(\d{2}[/\-][A-Za-z]{3}[/\-]\d{4})\b"""),
         Regex("""\b(\d{4}[/\-]\d{2}[/\-]\d{2})\b"""),
@@ -70,7 +83,18 @@ object SmsTimestampParser {
         for (format in DATE_FORMATS) {
             try {
                 val parsed = format.parse(candidate) ?: continue
-                val parsedMs = parsed.time
+                var parsedMs = parsed.time
+
+                // Handle time-only parsing by falling back to received date
+                val cal = java.util.Calendar.getInstance(EAT)
+                cal.timeInMillis = parsedMs
+                if (cal.get(java.util.Calendar.YEAR) == 1970) {
+                    val receivedCal = java.util.Calendar.getInstance(EAT)
+                    receivedCal.timeInMillis = receivedAtMs
+                    cal.set(java.util.Calendar.YEAR, receivedCal.get(java.util.Calendar.YEAR))
+                    cal.set(java.util.Calendar.DAY_OF_YEAR, receivedCal.get(java.util.Calendar.DAY_OF_YEAR))
+                    parsedMs = cal.timeInMillis
+                }
 
                 // Sanity check: reject dates more than 1 day in the future
                 // (clock skew protection) or more than 5 years in the past

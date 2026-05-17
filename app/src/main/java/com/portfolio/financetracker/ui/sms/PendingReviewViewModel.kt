@@ -9,9 +9,12 @@ import com.portfolio.financetracker.domain.model.TransactionType
 import com.portfolio.financetracker.domain.use_case.AddTransactionUseCase
 import com.portfolio.financetracker.domain.use_case.DeleteTransactionUseCase
 import com.portfolio.financetracker.domain.repository.TransactionRepository
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,6 +49,20 @@ class PendingReviewViewModel @Inject constructor(
     val pendingCount: StateFlow<Int> =
         repository.getPendingCount()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    val syncProgress: StateFlow<Float?> = WorkManager.getInstance(context)
+        .getWorkInfosForUniqueWorkFlow("sms_history_sync")
+        .map { infos ->
+            val info = infos.firstOrNull()
+            if (info != null && info.state == WorkInfo.State.RUNNING) {
+                val progress = info.progress.getInt("progress", 0)
+                val max = info.progress.getInt("max", 1)
+                if (max > 0) progress.toFloat() / max.toFloat() else 0f
+            } else {
+                null
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     // ── Actions ───────────────────────────────────────────────────────────────
 

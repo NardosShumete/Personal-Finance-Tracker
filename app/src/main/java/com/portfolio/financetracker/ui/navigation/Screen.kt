@@ -11,4 +11,6 @@ sealed class Screen(val route: String) {
     object PendingReviewScreen : Screen("pending_review_screen")
     object SmsAccountSetupScreen : Screen("sms_account_setup_screen")
     object CalendarScreen : Screen("calendar_screen")
+    object InsightsScreen : Screen("insights_screen")
+    object TransactionsScreen : Screen("transactions_screen")
 }

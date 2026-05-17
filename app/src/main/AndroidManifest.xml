@@ -46,6 +46,16 @@
             </intent-filter>
         </receiver>
 
+        <!-- Notification Listener Fallback for devices without SMS permission -->
+        <service
+            android:name=".core.sms.SmsNotificationListenerService"
+            android:exported="true"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
         <!-- Reminder Notification Action Receiver -->
         <receiver
             android:name=".core.receiver.ReminderActionReceiver"

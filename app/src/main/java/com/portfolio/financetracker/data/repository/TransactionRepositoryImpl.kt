@@ -7,7 +7,9 @@ import androidx.paging.PagingData
 import com.portfolio.financetracker.core.sms.SmsInboxReader
 import com.portfolio.financetracker.core.sms.SmsParser
 import com.portfolio.financetracker.data.local.DataStoreManager
+import com.portfolio.financetracker.data.local.dao.BankAccountDao
 import com.portfolio.financetracker.data.local.dao.TransactionDao
+import com.portfolio.financetracker.data.local.entity.BankAccountEntity
 import com.portfolio.financetracker.data.local.paging.TransactionPagingSource
 import com.portfolio.financetracker.data.mapper.toDomainModel
 import com.portfolio.financetracker.data.mapper.toEntityModel
@@ -22,6 +24,7 @@ import kotlinx.coroutines.flow.map
 
 class TransactionRepositoryImpl(
     private val dao: TransactionDao,
+    private val bankAccountDao: BankAccountDao,
     private val dataStoreManager: DataStoreManager
 ) : TransactionRepository {
 
@@ -93,8 +96,31 @@ class TransactionRepositoryImpl(
     override fun getPendingCount(): Flow<Int> =
         dao.getPendingCount()
 
-    override suspend fun confirmTransaction(id: Int) =
+    override suspend fun confirmTransaction(id: Int) {
+        val transaction = dao.getTransactionById(id) ?: return
         dao.confirmTransaction(id)
+        
+        if (transaction.source == "SMS" && transaction.smsBalance != null) {
+            val bankName = transaction.category.substringBefore(" Transfer").trim()
+            if (bankName.isNotEmpty()) {
+                val account = bankAccountDao.getBankAccountByName(bankName)
+                if (account == null) {
+                    bankAccountDao.insertBankAccount(
+                        BankAccountEntity(
+                            bankName = bankName,
+                            senderAddress = "UNKNOWN", // Fallback if not tracked
+                            lastKnownBalance = transaction.smsBalance,
+                            lastUpdated = transaction.date,
+                            totalTransactions = 1,
+                            colorHex = "#10B981" // Default accent color
+                        )
+                    )
+                } else {
+                    bankAccountDao.updateBalanceAndCount(bankName, transaction.smsBalance, transaction.date)
+                }
+            }
+        }
+    }
 
     /**
      * Historical SMS sync — "Day 1 balance" feature.
@@ -105,31 +131,45 @@ class TransactionRepositoryImpl(
      * 3. Parse with [SmsParser] — skip if not a bank transaction
      * 4. Insert as isPending=true so user can review before it hits totals
      */
-    override suspend fun syncSmsHistory(context: Context, limitPerSender: Int): Int {
+    override suspend fun syncSmsHistory(
+        context: Context, 
+        limitPerSender: Int,
+        onProgress: suspend (Int, Int) -> Unit
+    ): Int {
         val trackedSenders = dataStoreManager.trackedSmsSenders.first()
         val rawMessages = SmsInboxReader.readFromTrackedSenders(context, trackedSenders, limitPerSender)
+        
+        // Process oldest first
+        val sortedMessages = rawMessages.sortedBy { it.timestampMs }
+        val total = sortedMessages.size
+        
         var insertedCount = 0
+        var processedCount = 0
 
-        for (raw in rawMessages) {
-            if (raw.smsId.isNotBlank() && dao.countBySmsId(raw.smsId) > 0) continue
-            val parsed = SmsParser.parse(raw.sender, raw.body, raw.timestampMs, trackedSenders) ?: continue
-            if (dao.countBySmsHash(parsed.hash) > 0) continue
+        for (batch in sortedMessages.chunked(50)) {
+            for (raw in batch) {
+                processedCount++
+                if (raw.smsId.isNotBlank() && dao.countBySmsId(raw.smsId) > 0) continue
+                val parsed = SmsParser.parse(raw.sender, raw.body, raw.timestampMs, trackedSenders) ?: continue
+                if (dao.countBySmsHash(parsed.hash) > 0) continue
 
-            val transaction = Transaction(
-                amount     = parsed.amount,
-                category   = parsed.category,
-                date       = parsed.timestampMs,
-                type       = parsed.type,
-                note       = parsed.note,
-                source     = TransactionSource.SMS,
-                rawSms     = parsed.rawBody,
-                smsBalance = parsed.balance,
-                smsHash    = parsed.hash,
-                smsId      = raw.smsId,
-                isPending  = true
-            )
-            dao.insertTransaction(transaction.toEntityModel())
-            insertedCount++
+                val transaction = Transaction(
+                    amount     = parsed.amount,
+                    category   = parsed.category,
+                    date       = parsed.timestampMs,
+                    type       = parsed.type,
+                    note       = parsed.note,
+                    source     = TransactionSource.SMS,
+                    rawSms     = parsed.rawBody,
+                    smsBalance = parsed.balance,
+                    smsHash    = parsed.hash,
+                    smsId      = raw.smsId,
+                    isPending  = true
+                )
+                dao.insertTransaction(transaction.toEntityModel())
+                insertedCount++
+            }
+            onProgress(processedCount, total)
         }
         return insertedCount
     }
