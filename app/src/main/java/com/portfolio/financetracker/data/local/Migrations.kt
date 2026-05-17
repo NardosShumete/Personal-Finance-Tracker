@@ -89,3 +89,41 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
         )
     }
 }
+
+/**
+ * Migration 8 → 9: adds receiptPath to transaction_table
+ */
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `transaction_table` ADD COLUMN `receiptPath` TEXT")
+    }
+}
+
+/**
+ * Migration 9 → 10: adds recurringPeriod to transaction_table
+ */
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `transaction_table` ADD COLUMN `recurringPeriod` TEXT NOT NULL DEFAULT 'NONE'")
+    }
+}
+
+/**
+ * Migration 10 → 11: adds indices for performance
+ */
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_transaction_table_date` ON `transaction_table` (`date`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_transaction_table_category` ON `transaction_table` (`category`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_transaction_table_type` ON `transaction_table` (`type`)")
+    }
+}
+
+/**
+ * Migration 11 → 12: Empty migration to resolve integrity hash mismatch after branch merge
+ */
+val MIGRATION_11_12 = object : Migration(11, 12) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // No schema changes, just forcing a version bump to refresh Room's identity hash
+    }
+}

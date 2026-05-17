@@ -1,5 +1,6 @@
 package com.portfolio.financetracker.data.repository
 
+import com.portfolio.financetracker.BuildConfig
 import com.portfolio.financetracker.data.remote.groq.*
 import com.portfolio.financetracker.domain.repository.AiRepository
 import kotlinx.serialization.json.Json
@@ -9,7 +10,13 @@ class AiRepositoryImpl @Inject constructor(
     private val api: GroqApi
 ) : AiRepository {
 
-    private val apiKey = "Bearer YOUR_GROQ_API_KEY"
+    init {
+        if (BuildConfig.GROQ_API_KEY.isBlank()) {
+            throw IllegalStateException("Groq API key missing. Please add GROQ_API_KEY to your local.properties file.")
+        }
+    }
+
+    private val apiKey = "Bearer ${BuildConfig.GROQ_API_KEY}"
     
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -49,7 +56,14 @@ class AiRepositoryImpl @Inject constructor(
         )
 
         val response = api.getChatCompletion(apiKey, request)
-        val content = response.choices.firstOrNull()?.message?.content ?: throw Exception("Empty AI response")
+        var content = response.choices.firstOrNull()?.message?.content ?: throw Exception("Empty AI response")
+        
+        // Clean markdown if present
+        if (content.contains("```json")) {
+            content = content.substringAfter("```json").substringBeforeLast("```").trim()
+        } else if (content.contains("```")) {
+            content = content.substringAfter("```").substringBeforeLast("```").trim()
+        }
         
         return json.decodeFromString<AiInsightResponse>(content)
     }

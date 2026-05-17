@@ -12,6 +12,18 @@ android {
     namespace = "com.portfolio.financetracker"
     compileSdk = 34
 
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
+
+    /**
+     * Groq API Key configuration.
+     * Contributors: Add the following line to your local.properties file:
+     * GROQ_API_KEY=YOUR_GROQ_API_KEY_HERE
+     */
+    val groqApiKey = project.findProperty("GROQ_API_KEY") as String? ?: ""
+
     defaultConfig {
         applicationId = "com.portfolio.financetracker"
         minSdk = 26
@@ -23,6 +35,8 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        buildConfigField("String", "GROQ_API_KEY", "\"$groqApiKey\"")
     }
 
     buildTypes {
@@ -40,9 +54,6 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
-    }
-    buildFeatures {
-        compose = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.10"

@@ -37,7 +37,23 @@ object AppModule {
             app,
             FinanceDatabase::class.java,
             FinanceDatabase.DATABASE_NAME
-        ).fallbackToDestructiveMigration().build()
+        )
+        .addMigrations(
+            com.portfolio.financetracker.data.local.MIGRATION_5_6,
+            com.portfolio.financetracker.data.local.MIGRATION_6_7,
+            com.portfolio.financetracker.data.local.MIGRATION_7_8,
+            com.portfolio.financetracker.data.local.MIGRATION_8_9,
+            com.portfolio.financetracker.data.local.MIGRATION_9_10,
+            com.portfolio.financetracker.data.local.MIGRATION_10_11,
+            com.portfolio.financetracker.data.local.MIGRATION_11_12
+        )
+        .fallbackToDestructiveMigration()
+        .build()
+    }
+
+    @Provides
+    fun provideBankAccountDao(db: FinanceDatabase): com.portfolio.financetracker.data.local.dao.BankAccountDao {
+        return db.bankAccountDao
     }
 
     @Provides
