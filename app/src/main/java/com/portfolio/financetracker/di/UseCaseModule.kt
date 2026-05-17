@@ -18,10 +18,25 @@ import com.portfolio.financetracker.domain.repository.GoalRepository
 import com.portfolio.financetracker.domain.use_case.GoalUseCases
 import com.portfolio.financetracker.domain.use_case.GetGoalUseCase
 import com.portfolio.financetracker.domain.use_case.SaveGoalUseCase
+import com.portfolio.financetracker.domain.repository.AiRepository
+import com.portfolio.financetracker.domain.use_case.GetAiInsightsUseCase
+import com.portfolio.financetracker.domain.use_case.GetAiChatResponseUseCase
 
 @Module
 @InstallIn(SingletonComponent::class)
 object UseCaseModule {
+    @Provides
+    @Singleton
+    fun provideGetAiInsightsUseCase(repository: AiRepository): GetAiInsightsUseCase {
+        return GetAiInsightsUseCase(repository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGetAiChatResponseUseCase(repository: AiRepository): GetAiChatResponseUseCase {
+        return GetAiChatResponseUseCase(repository)
+    }
+
     @Provides
     @Singleton
     fun provideTransactionUseCases(repository: TransactionRepository): TransactionUseCases {

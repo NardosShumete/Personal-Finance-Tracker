@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlinSerialization)
     id("com.google.gms.google-services")
 }
 
@@ -92,6 +93,12 @@ dependencies {
 
     // Coil — image loading for receipt thumbnails
     implementation(libs.coil.compose)
+
+    // Networking & Serialization
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.kotlin.serialization)
+    implementation(libs.okhttp.logging)
+    implementation(libs.kotlinx.serialization.json)
 
     debugImplementation(libs.androidx.ui.tooling)
 }
