@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
-    id("com.google.gms.google-services")
+    // id("com.google.gms.google-services") // Temporarily disabled to fix missing google-services.json error
 }
 
 android {
@@ -89,10 +89,10 @@ dependencies {
     // Coil — image loading for receipt thumbnails
     implementation(libs.coil.compose)
 
-    // Firebase — Authentication
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.analytics)
+    // Firebase (Disabled until google-services.json is added)
+    // implementation(platform(libs.firebase.bom))
+    // implementation(libs.firebase.auth)
+    // implementation(libs.firebase.analytics)
 
     debugImplementation(libs.androidx.ui.tooling)
 }

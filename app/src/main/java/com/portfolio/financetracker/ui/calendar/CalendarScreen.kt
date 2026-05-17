@@ -199,18 +199,16 @@ fun AddReminderDialog(
                 Text("Category", style = MaterialTheme.typography.labelMedium)
                 val categories = listOf("Housing", "Utilities", "Subscription", "Debt", "Investment")
                 
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        val chunkedCategories = categories.chunked(3)
-                        chunkedCategories.forEach { chunk ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                chunk.forEach { cat ->
-                                    FilterChip(
-                                        selected = category == cat,
-                                        onClick = { category = cat },
-                                        label = { Text(cat) }
-                                    )
-                                }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val chunkedCategories = categories.chunked(2)
+                    chunkedCategories.forEach { chunk ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            chunk.forEach { cat ->
+                                FilterChip(
+                                    selected = category == cat,
+                                    onClick = { category = cat },
+                                    label = { Text(cat) }
+                                )
                             }
                         }
                     }
