@@ -1,11 +1,16 @@
 package com.portfolio.financetracker.ui.insights
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -17,11 +22,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.portfolio.financetracker.core.util.CurrencyHelper
 import com.portfolio.financetracker.core.util.LocalCurrencyCode
+import com.portfolio.financetracker.data.remote.groq.AiInsightResponse
+import com.portfolio.financetracker.data.remote.groq.GroqMessage
 import com.portfolio.financetracker.domain.model.FinancialInsight
 import com.portfolio.financetracker.domain.model.InsightPriority
 import com.portfolio.financetracker.domain.model.InsightsData
@@ -29,6 +37,7 @@ import com.portfolio.financetracker.ui.charts.components.AnimatedPieChart
 import com.portfolio.financetracker.ui.charts.components.GlowLineChart
 import com.portfolio.financetracker.ui.components.GlassCard
 import com.portfolio.financetracker.ui.theme.*
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,23 +74,48 @@ fun InsightsScreen(
             }
         } else {
             state.insightsData?.let { data ->
-                InsightsContent(data, Modifier.padding(padding))
+                InsightsContent(
+                    data = data,
+                    state = state,
+                    onSendMessage = viewModel::onSendMessage,
+                    modifier = Modifier.padding(padding)
+                )
             }
         }
     }
 }
 
 @Composable
-fun InsightsContent(data: InsightsData, modifier: Modifier = Modifier) {
+fun InsightsContent(
+    data: InsightsData, 
+    state: InsightsUiState, 
+    onSendMessage: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val currencyCode = LocalCurrencyCode.current
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+
+    // Auto scroll to bottom when new messages arrive
+    LaunchedEffect(state.chatMessages.size, state.isChatLoading) {
+        if (state.chatMessages.isNotEmpty()) {
+            listState.animateScrollToItem(listState.layoutInfo.totalItemsCount - 1)
+        }
+    }
 
     LazyColumn(
+        state = listState,
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
         contentPadding = PaddingValues(bottom = 32.dp)
     ) {
+        // AI Assistant Section
+        item {
+            AiAssistantSection(state.aiInsights, state.isAiLoading, state.aiError)
+        }
+
         // 1. Summary Cards Row
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -170,6 +204,169 @@ fun InsightsContent(data: InsightsData, modifier: Modifier = Modifier) {
             items(data.humanReadableInsights) { insight ->
                 InsightCard(insight)
             }
+        }
+
+        // 8. Interactive Chat Section
+        item {
+            SectionHeader("Ask about your finances")
+            AiChatSection(
+                messages = state.chatMessages,
+                isLoading = state.isChatLoading,
+                error = state.chatError,
+                onSendMessage = onSendMessage
+            )
+        }
+    }
+}
+
+@Composable
+fun AiAssistantSection(
+    aiInsights: AiInsightResponse?,
+    isLoading: Boolean,
+    error: String?
+) {
+    SectionHeader("AI Financial Assistant")
+    GlassCard(
+        modifier = Modifier.fillMaxWidth(),
+        glassColor = GradientPurple.copy(alpha = 0.15f)
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            if (isLoading) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = GradientPurple, strokeWidth = 2.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Text("AI is analyzing your spending...", color = Slate400, fontSize = 14.sp)
+                }
+            } else if (error != null) {
+                Text("AI analysis unavailable: $error", color = ElectricRose, fontSize = 14.sp)
+            } else if (aiInsights != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier.size(32.dp).background(GradientPurple, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Text("Smart Insights", color = SlateWhite, fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.height(12.dp))
+                Text(aiInsights.summary, color = Slate200, fontSize = 14.sp, lineHeight = 20.sp)
+                
+                if (aiInsights.budget_warning != null) {
+                    Spacer(Modifier.height(12.dp))
+                    Row(
+                        Modifier.fillMaxWidth().background(RoseBg, RoundedCornerShape(8.dp)).padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Warning, contentDescription = null, tint = ElectricRose, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(aiInsights.budget_warning, color = ElectricRose, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+                Text("Recommendations", color = GradientTeal, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                aiInsights.recommendations.take(3).forEach { recommendation ->
+                    Row(Modifier.padding(top = 8.dp)) {
+                        Text("•", color = GradientTeal, modifier = Modifier.padding(end = 8.dp))
+                        Text(recommendation, color = Slate200, fontSize = 13.sp)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AiChatSection(
+    messages: List<GroqMessage>,
+    isLoading: Boolean,
+    error: String?,
+    onSendMessage: (String) -> Unit
+) {
+    var textState by remember { mutableStateOf("") }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        messages.forEach { msg ->
+            ChatBubble(msg)
+        }
+
+        if (isLoading) {
+            Box(Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.CenterStart) {
+                CircularProgressIndicator(Modifier.size(16.dp), color = GradientPurple, strokeWidth = 2.dp)
+            }
+        }
+
+        if (error != null) {
+            Text("Error: $error", color = ElectricRose, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 8.dp))
+        }
+
+        OutlinedTextField(
+            value = textState,
+            onValueChange = { textState = it },
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Ask me anything...", color = Slate400, fontSize = 14.sp) },
+            trailingIcon = {
+                IconButton(
+                    onClick = { 
+                        onSendMessage(textState)
+                        textState = ""
+                    },
+                    enabled = textState.isNotBlank() && !isLoading
+                ) {
+                    Icon(Icons.Default.Send, contentDescription = "Send", tint = if (textState.isNotBlank()) GradientPurple else Slate600)
+                }
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = GradientPurple,
+                unfocusedBorderColor = MidnightBorder,
+                focusedContainerColor = MidnightSurface,
+                unfocusedContainerColor = MidnightSurface,
+                focusedTextColor = SlateWhite,
+                unfocusedTextColor = SlateWhite,
+                cursorColor = GradientPurple
+            ),
+            shape = RoundedCornerShape(16.dp),
+            maxLines = 3,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+            keyboardActions = KeyboardActions(onSend = {
+                if (textState.isNotBlank() && !isLoading) {
+                    onSendMessage(textState)
+                    textState = ""
+                }
+            })
+        )
+    }
+}
+
+@Composable
+fun ChatBubble(message: GroqMessage) {
+    val isUser = message.role == "user"
+    val alignment = if (isUser) Alignment.CenterEnd else Alignment.CenterStart
+    val bgColor = if (isUser) GradientIndigo.copy(alpha = 0.3f) else MidnightSurface.copy(alpha = 0.6f)
+    val textColor = if (isUser) SlateWhite else Slate200
+
+    Box(Modifier.fillMaxWidth(), contentAlignment = alignment) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .clip(RoundedCornerShape(
+                    topStart = 16.dp, 
+                    topEnd = 16.dp, 
+                    bottomStart = if (isUser) 16.dp else 4.dp,
+                    bottomEnd = if (isUser) 4.dp else 16.dp
+                ))
+                .background(bgColor)
+                .border(0.5.dp, MidnightBorder, RoundedCornerShape(16.dp))
+                .padding(12.dp)
+        ) {
+            Text(
+                text = message.content,
+                color = textColor,
+                fontSize = 13.sp,
+                lineHeight = 18.sp
+            )
         }
     }
 }

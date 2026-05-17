@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
     // id("com.google.gms.google-services") // Temporarily disabled to fix missing google-services.json error
+    alias(libs.plugins.kotlinSerialization)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -75,7 +77,6 @@ dependencies {
     // Biometric & DataStore
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.datastore.preferences)
-    
     // WorkManager & Hilt
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
@@ -86,13 +87,19 @@ dependencies {
     implementation(libs.paging.compose)
     implementation(libs.room.paging)
 
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.analytics)
+
     // Coil — image loading for receipt thumbnails
     implementation(libs.coil.compose)
 
-    // Firebase (Disabled until google-services.json is added)
-    // implementation(platform(libs.firebase.bom))
-    // implementation(libs.firebase.auth)
-    // implementation(libs.firebase.analytics)
+    // Networking & Serialization
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.kotlin.serialization)
+    implementation(libs.okhttp.logging)
+    implementation(libs.kotlinx.serialization.json)
 
     debugImplementation(libs.androidx.ui.tooling)
 }
