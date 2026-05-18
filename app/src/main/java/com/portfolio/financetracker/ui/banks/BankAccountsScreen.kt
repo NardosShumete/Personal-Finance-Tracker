@@ -25,8 +25,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.portfolio.financetracker.data.local.entity.BankAccountEntity
 import com.portfolio.financetracker.ui.theme.*
-import java.text.SimpleDateFormat
-import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,7 +113,7 @@ fun BankAccountsScreen(
                     // ── Total across all banks ────────────────────────────────
                     item {
                         val totalBalance = uiState.accounts.sumOf {
-                            it.lastKnownBalance
+                            it.totalIncome - it.totalExpense
                         }
                         TotalBalanceBanner(totalBalance = totalBalance)
                     }
@@ -132,7 +130,7 @@ fun BankAccountsScreen(
                     items(uiState.accounts, key = { it.id }) { account ->
                         BankAccountCard(
                             account = account,
-                            onClick = { onBankClick(account.bankName) }
+                            onClick = { onBankClick(account.shortName) }
                         )
                     }
 
@@ -188,8 +186,6 @@ private fun BankAccountCard(
         Color(android.graphics.Color.parseColor(account.colorHex))
     }.getOrDefault(EmeraldGreen)
 
-    val dateFormat = SimpleDateFormat("MMM dd, yyyy · HH:mm", Locale.getDefault())
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -226,7 +222,7 @@ private fun BankAccountCard(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = account.bankName.take(2).uppercase(),
+                    text = account.shortName.take(2).uppercase(),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = accentColor
@@ -238,20 +234,20 @@ private fun BankAccountCard(
             // Bank info
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = account.bankName,
+                    text = account.fullName,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "${account.totalTransactions} transaction${if (account.totalTransactions != 1) "s" else ""}",
+                    text = "${account.transactionCount} transaction${if (account.transactionCount != 1) "s" else ""}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Updated ${dateFormat.format(Date(account.lastUpdated))}",
+                    text = "Connected",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                 )
@@ -259,11 +255,12 @@ private fun BankAccountCard(
 
             // Balance + arrow
             Column(horizontalAlignment = Alignment.End) {
+                val balance = account.totalIncome - account.totalExpense
                 Text(
-                    text = "ETB ${"%.2f".format(account.lastKnownBalance)}",
+                    text = "ETB ${"%.2f".format(balance)}",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = if (account.lastKnownBalance >= 0) EmeraldGreen else ElectricRose
+                    color = if (balance >= 0) EmeraldGreen else ElectricRose
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Icon(

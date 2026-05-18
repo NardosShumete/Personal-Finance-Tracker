@@ -19,8 +19,8 @@ android {
 
     /**
      * Groq API Key configuration.
-     * Contributors: Add the following line to your local.properties file:
-     * GROQ_API_KEY=YOUR_GROQ_API_KEY_HERE
+     * Contributors: Add your API key to your local.properties file:
+     * GROQ_API_KEY=your_api_key_here
      */
     val groqApiKey = project.findProperty("GROQ_API_KEY") as String? ?: ""
 
