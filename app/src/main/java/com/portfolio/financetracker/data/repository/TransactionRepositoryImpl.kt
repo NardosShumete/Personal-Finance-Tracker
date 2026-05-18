@@ -156,7 +156,8 @@ class TransactionRepositoryImpl(
                     smsBalance = parsed.balance,
                     smsHash    = parsed.hash,
                     smsId      = raw.smsId,
-                    isPending  = true
+                    isPending  = true,
+                    bankName   = parsed.bankName.ifBlank { null }
                 )
                 dao.insertTransaction(transaction.toEntityModel())
                 insertedCount++
@@ -165,4 +166,11 @@ class TransactionRepositoryImpl(
         }
         return insertedCount
     }
+
+    override fun getBankAccounts() = bankAccountDao.getAllBankAccounts()
+
+    override fun getTransactionsByBank(bankName: String): Flow<List<Transaction>> =
+        dao.getTransactionsByBank(bankName)
+            .map { entities -> entities.map { it.toDomainModel() } }
+            .flowOn(Dispatchers.IO)
 }

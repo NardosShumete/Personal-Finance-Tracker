@@ -54,4 +54,10 @@ interface TransactionRepository {
         limitPerSender: Int = 200,
         onProgress: suspend (Int, Int) -> Unit = { _, _ -> }
     ): Int
+
+    /** Live list of all bank accounts for the Banks screen */
+    fun getBankAccounts(): kotlinx.coroutines.flow.Flow<List<com.portfolio.financetracker.data.local.entity.BankAccountEntity>>
+
+    /** Transactions filtered by bank name for BankTransactionsScreen */
+    fun getTransactionsByBank(bankName: String): kotlinx.coroutines.flow.Flow<List<Transaction>>
 }

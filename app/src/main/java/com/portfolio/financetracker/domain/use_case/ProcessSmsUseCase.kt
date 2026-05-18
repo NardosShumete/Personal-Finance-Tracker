@@ -47,7 +47,8 @@ class ProcessSmsUseCase @Inject constructor(
             rawSms     = parsed.rawBody,
             smsBalance = parsed.balance,
             smsHash    = parsed.hash,
-            isPending  = true   // always requires user confirmation
+            isPending  = true,
+            bankName   = parsed.bankName.ifBlank { null }
         )
 
         repository.insertFromSmsIfNotDuplicate(transaction)

@@ -193,6 +193,28 @@ fun FinanceNavGraph(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
+
+            // ── Bank Accounts ─────────────────────────────────────────────────
+            composable(route = Screen.BankAccountsScreen.route) {
+                com.portfolio.financetracker.ui.banks.BankAccountsScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onBankClick    = { bankName ->
+                        navController.navigate(Screen.BankTransactionsScreen.createRoute(bankName))
+                    }
+                )
+            }
+
+            // ── Bank Transactions ─────────────────────────────────────────────
+            composable(
+                route = Screen.BankTransactionsScreen.route,
+                arguments = listOf(
+                    navArgument("bankName") { type = NavType.StringType }
+                )
+            ) {
+                com.portfolio.financetracker.ui.banks.BankTransactionsScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }

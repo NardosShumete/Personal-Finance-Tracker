@@ -45,6 +45,7 @@ fun DashboardScreen(
     onNavigateToTransactions: () -> Unit,
     onNavigateToCharts: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
+    onNavigateToBanks: () -> Unit = {},
     onOpenDrawer: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
     bankViewModel: BankAccountViewModel = hiltViewModel()
@@ -131,6 +132,7 @@ fun DashboardScreen(
                         )
 
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TopBarIconButton(icon = Icons.Default.AccountBalance, onClick = onNavigateToBanks)
                             TopBarIconButton(icon = Icons.Default.BarChart, onClick = onNavigateToCharts)
                             TopBarIconButton(icon = Icons.Default.Settings, onClick = onNavigateToSettings)
                         }
