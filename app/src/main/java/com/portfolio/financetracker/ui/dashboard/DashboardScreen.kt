@@ -188,7 +188,7 @@ fun DashboardScreen(
                     ) {
                         Icon(Icons.Default.History, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("View All Transactions & Search")
+                        Text(stringResource(R.string.view_all_transactions_search))
                     }
                 }
             }
@@ -372,14 +372,14 @@ private fun EmptyTransactionsState() {
         }
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "No transactions yet",
+            text = stringResource(R.string.no_transactions_yet),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "Tap + to add your first transaction",
+            text = stringResource(R.string.tap_add_first_transaction),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
