@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import com.portfolio.financetracker.data.local.entity.BankAccountEntity
 import java.util.Locale
@@ -43,26 +44,26 @@ fun AddBankBottomSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Add Bank Account", style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.add_bank_account), style = MaterialTheme.typography.titleLarge)
             
             OutlinedTextField(
                 value = shortName,
                 onValueChange = { shortName = it },
-                label = { Text("Bank Short Name (e.g. CBE)") },
+                label = { Text(stringResource(R.string.bank_short_name_example)) },
                 modifier = Modifier.fillMaxWidth()
             )
             
             OutlinedTextField(
                 value = fullName,
                 onValueChange = { fullName = it },
-                label = { Text("Full Bank Name") },
+                label = { Text(stringResource(R.string.full_bank_name)) },
                 modifier = Modifier.fillMaxWidth()
             )
             
             OutlinedTextField(
                 value = smsSenderId,
                 onValueChange = { smsSenderId = it },
-                label = { Text("SMS Sender ID (e.g. CBEBirr)") },
+                label = { Text(stringResource(R.string.sms_sender_id_example)) },
                 modifier = Modifier.fillMaxWidth()
             )
             
@@ -74,7 +75,7 @@ fun AddBankBottomSheet(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
                 Button(
                     onClick = {
@@ -85,7 +86,7 @@ fun AddBankBottomSheet(
                     modifier = Modifier.weight(1f),
                     enabled = shortName.isNotBlank() && smsSenderId.isNotBlank()
                 ) {
-                    Text("Add")
+                    Text(stringResource(R.string.add))
                 }
             }
         }
@@ -102,7 +103,7 @@ fun BankAccountsSection(
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "Accounts",
+            text = stringResource(R.string.accounts),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
@@ -193,7 +194,7 @@ fun BankCard(
                 StatusBadge(isConnected = bank.isConnected)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "${bank.transactionCount} txns",
+                    text = stringResource(R.string.transactions_abbr, bank.transactionCount),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -208,10 +209,10 @@ fun BankCard(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Spacer(modifier = Modifier.height(8.dp))
                     
-                    DetailRow("Full Name", bank.fullName)
-                    DetailRow("Sender ID", bank.smsSenderId)
-                    DetailRow("Income", "ETB ${String.format(Locale.getDefault(), "%.2f", bank.totalIncome)}", Color(0xFF2E7D32))
-                    DetailRow("Expense", "ETB ${String.format(Locale.getDefault(), "%.2f", bank.totalExpense)}", Color(0xFFC62828))
+                    DetailRow(stringResource(R.string.full_name), bank.fullName)
+                    DetailRow(stringResource(R.string.sender_id), bank.smsSenderId)
+                    DetailRow(stringResource(R.string.income), "ETB ${String.format(Locale.getDefault(), "%.2f", bank.totalIncome)}", Color(0xFF2E7D32))
+                    DetailRow(stringResource(R.string.expense), "ETB ${String.format(Locale.getDefault(), "%.2f", bank.totalExpense)}", Color(0xFFC62828))
 
                     Spacer(modifier = Modifier.height(12.dp))
                     
@@ -225,7 +226,10 @@ fun BankCard(
                         shape = RoundedCornerShape(8.dp),
                         contentPadding = PaddingValues(vertical = 4.dp)
                     ) {
-                        Text(if (bank.isConnected) "Disconnect SMS" else "Connect SMS", fontSize = 12.sp)
+                        Text(
+                            if (bank.isConnected) stringResource(R.string.disconnect_sms) else stringResource(R.string.connect_sms),
+                            fontSize = 12.sp
+                        )
                     }
                 }
             }
@@ -254,9 +258,9 @@ fun StatusBadge(isConnected: Boolean) {
                     .background(Color(0xFF4CAF50).copy(alpha = alpha))
             )
             Spacer(modifier = Modifier.width(4.dp))
-            Text("Live", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4CAF50))
+            Text(stringResource(R.string.status_live), style = MaterialTheme.typography.labelSmall, color = Color(0xFF4CAF50))
         } else {
-            Text("Disconnected", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.status_disconnected), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -287,7 +291,7 @@ fun AddBankCard(onClick: () -> Unit) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                Text("Add Bank", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.add_bank), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
             }
         }
     }
