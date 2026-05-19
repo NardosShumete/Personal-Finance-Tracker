@@ -6,6 +6,7 @@ import com.portfolio.financetracker.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,20 +26,18 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override val isLoggedIn: Boolean
-        get() = false // Managed via Flow in this local implementation
+        get() = runBlocking { dataStore.userUid.first().isNotBlank() }
 
     override suspend fun signIn(email: String, password: String): Result<UserProfile> =
         runCatching {
             // Local mock sign-in: check if email matches cached email
             val cachedEmail = dataStore.userEmail.first()
             if (cachedEmail.isNotBlank() && cachedEmail == email) {
-                val profile = loadCachedProfile() ?: error("User not found")
+                val profile = loadCachedProfile() ?: error("User profile data missing")
                 profile
             } else {
-                // For a simple local demo, we'll "register" them if they don't exist
-                val profile = UserProfile(uid = "local_user", email = email, username = "Guest")
-                saveUserProfile(profile)
-                profile
+                // Enforce registration: do not allow login if email doesn't match or is empty
+                throw Exception("Account not found. Please register first.")
             }
         }
 
