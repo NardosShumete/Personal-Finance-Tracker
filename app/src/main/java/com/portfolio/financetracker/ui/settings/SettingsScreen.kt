@@ -284,7 +284,7 @@ fun SettingsScreen(
                         Column {
                             Text(text = stringResource(R.string.language), style = MaterialTheme.typography.bodyLarge)
                             Text(
-                                text = stringResource(R.string.current_currency, if(currentLanguage == "am") "አማርኛ" else "English"),
+                                text = stringResource(R.string.current_language, if (currentLanguage == "am") "አማርኛ" else "English"),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
