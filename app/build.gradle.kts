@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
-    // id("com.google.gms.google-services") // Temporarily disabled to fix missing google-services.json error
     alias(libs.plugins.kotlinSerialization)
     id("com.google.gms.google-services")
 }
@@ -18,22 +17,10 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary = true
-        }
+        vectorDrawables.useSupportLibrary = true
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -41,12 +28,8 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
-    buildFeatures {
-        compose = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.10"
-    }
+    buildFeatures { compose = true }
+    composeOptions { kotlinCompilerExtensionVersion = "1.5.10" }
 }
 
 dependencies {
@@ -60,46 +43,38 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
-    
+
     // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    implementation(libs.room.paging) // Required for PagingSource in DAO
     ksp(libs.room.compiler)
-    
+
     // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.hilt.navigation.compose)
-    
-    // Coroutines
-    implementation(libs.kotlinx.coroutines.android)
-    
-    // Biometric & DataStore
-    implementation(libs.androidx.biometric)
-    implementation(libs.androidx.datastore.preferences)
-    // WorkManager & Hilt
+
+    // WorkManager & Hilt Integration
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
-    ksp(libs.androidx.hilt.compiler)
+    ksp(libs.androidx.hilt.compiler) // Essential for HiltWorkerFactory generation
 
     // Paging 3
     implementation(libs.paging.runtime)
     implementation(libs.paging.compose)
-    implementation(libs.room.paging)
 
-    // Firebase
+    // Other libraries...
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.analytics)
-
-    // Coil — image loading for receipt thumbnails
     implementation(libs.coil.compose)
-
-    // Networking & Serialization
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.kotlin.serialization)
     implementation(libs.okhttp.logging)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.biometric)
+    implementation(libs.androidx.datastore.preferences)
 
     debugImplementation(libs.androidx.ui.tooling)
 }

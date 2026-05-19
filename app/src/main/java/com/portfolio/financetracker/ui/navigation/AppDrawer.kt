@@ -77,6 +77,12 @@ fun AppDrawer(
             onClick = { onNavigateTo(Screen.DashboardScreen.route) }
         )
         DrawerItem(
+            icon = Icons.Default.NotificationsActive,
+            label = "Budget Planner & Alerts",
+            selected = currentRoute == Screen.MonthlyGoalsScreen.route,
+            onClick = { onNavigateTo(Screen.MonthlyGoalsScreen.route) }
+        )
+        DrawerItem(
             icon = Icons.Default.CalendarMonth,
             label = "Calendar & Reminders",
             selected = currentRoute == Screen.CalendarScreen.route,
