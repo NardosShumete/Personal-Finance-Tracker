@@ -2,6 +2,8 @@
 
 A production-ready Android application built with **Kotlin** and **Jetpack Compose**, designed to automatically track Ethiopian bank transactions via SMS, provide AI-powered financial insights, and give users full control over their money — all stored locally on-device.
 
+This project serves as a showcase of modern Android development patterns, including **Clean Architecture**, **Dependency Injection**, and **Reactive UI**.
+
 ---
 
 ## 🚀 Features
@@ -27,6 +29,7 @@ A production-ready Android application built with **Kotlin** and **Jetpack Compo
 - **Recurring Transactions** — NONE / WEEKLY / MONTHLY
 - **Category Chips** — quick-select suggestions per transaction type
 - **Edit & Delete** — full edit form with delete confirmation dialog
+- **Offline First** — Fully functional offline storage using the Room Persistence Library.
 
 ### 📱 SMS Auto-Parse *(Ethiopian Banks)*
 - **Real-time Interception** — `SmsBroadcastReceiver` → `WorkManager` → `SmsProcessWorker`
@@ -105,25 +108,34 @@ A production-ready Android application built with **Kotlin** and **Jetpack Compo
 
 | Category | Technology |
 |---|---|
-| Language | Kotlin |
-| UI | Jetpack Compose + Material 3 |
+| Language | [Kotlin](https://kotlinlang.org/) |
+| UI Framework | [Jetpack Compose](https://developer.android.com/jetpack/compose) (Material 3) |
 | Architecture | MVVM + Clean Architecture |
-| DI | Dagger-Hilt |
-| Database | Room (SQLite) v8 |
-| Preferences | Jetpack DataStore |
+| DI | [Dagger-Hilt](https://dagger.dev/hilt/) |
+| Database | [Room](https://developer.android.com/training/data-storage/room) v8 |
+| Preferences | [Jetpack DataStore](https://developer.android.com/topic/libraries/architecture/datastore) |
 | Auth | Firebase Authentication |
 | AI | Groq API (via Retrofit) |
-| Background | WorkManager (Hilt-injected) |
-| Pagination | Paging 3 |
-| Image Loading | Coil |
-| Async | Kotlin Coroutines + Flow |
-| Navigation | Jetpack Compose Navigation |
+| Background | [WorkManager](https://developer.android.com/topic/libraries/architecture/workmanager) (Hilt-injected) |
+| Pagination | [Paging 3](https://developer.android.com/topic/libraries/architecture/paging/v3-paged-data) |
+| Image Loading | [Coil](https://coil-kt.github.io/coil/) |
+| Async | [Kotlin Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) + [Flow](https://kotlinlang.org/docs/flow.html) |
+| Navigation | [Jetpack Compose Navigation](https://developer.android.com/jetpack/compose/navigation) |
 | Security | AndroidX Biometric API |
+| Dependency Management | Gradle Version Catalog (`libs.versions.toml`) |
+| Code Generation | KSP (Kotlin Symbol Processing) |
 
 ---
 
 ## 🏗 Architecture
 
+The app follows **Clean Architecture** principles to ensure scalability, maintainability, and testability. It is divided into three main layers:
+
+1.  **Data Layer**: Handles data persistence (Room) and remote communication (Retrofit/Firebase). Includes Mappers to convert between Database Entities/API Responses and Domain Models.
+2.  **Domain Layer**: The core business logic. Contains pure Kotlin Models, Repository Interfaces, and **Use Cases (Interactors)** for specific business rules.
+3.  **UI Layer**: Jetpack Compose screens that observe **UI State (StateFlow)** from ViewModels. ViewModels interact only with Use Cases, keeping them decoupled from data implementation details.
+
+### Project Structure
 ```
 app/
 ├── core/
@@ -308,6 +320,12 @@ app/
   <img src="screenshots/Profile.png" width="45%" alt="Profile" />
   <img src="screenshots/Setting.png" width="45%" alt="Settings" />
 </p>
+
+---
+
+## 📄 License
+
+This project is open-source and available under the [MIT License](LICENSE).
 
 ---
 

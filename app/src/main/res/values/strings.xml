@@ -59,4 +59,19 @@
     <string name="cat_entertainment">Entertainment</string>
     <string name="cat_other">Other</string>
 
+    <!-- Banks -->
+    <string name="bank_accounts">Bank Accounts</string>
+    <string name="total_across_all_banks">TOTAL ACROSS ALL BANKS</string>
+    <string name="connected_banks_format">%1$d connected bank%2$s</string>
+    <string name="connected_label">Connected</string>
+    <string name="no_bank_accounts">No bank accounts yet</string>
+    <string name="connect_bank_desc">Connect your bank accounts via\nSettings → SMS Auto-Parse</string>
+    <string name="balance_format">ETB %1$.2f</string>
+
+    <!-- Dashboard Extra -->
+    <string name="view_all_transactions">View All Transactions &amp; Search</string>
+    <string name="search_transactions_hint">Search transactions...</string>
+    <string name="no_transactions_title">No transactions yet</string>
+    <string name="add_first_transaction_desc">Tap + to add your first transaction</string>
+
 </resources>

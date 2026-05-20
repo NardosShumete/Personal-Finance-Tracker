@@ -11,7 +11,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,10 +24,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.stringResource
+import com.portfolio.financetracker.R
 import com.portfolio.financetracker.data.local.entity.BankAccountEntity
 import com.portfolio.financetracker.ui.theme.*
+import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BankAccountsScreen(
     onNavigateBack: () -> Unit,
@@ -84,7 +87,7 @@ fun BankAccountsScreen(
                             )
                         }
                         Text(
-                            text = "Bank Accounts",
+                            text = stringResource(R.string.bank_accounts),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground
@@ -120,7 +123,11 @@ fun BankAccountsScreen(
 
                     item {
                         Text(
-                            text = "${uiState.accounts.size} connected bank${if (uiState.accounts.size > 1) "s" else ""}",
+                            text = stringResource(
+                                R.string.connected_banks_format,
+                                uiState.accounts.size,
+                                if (uiState.accounts.size > 1) "s" else ""
+                            ),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onBackground
@@ -158,14 +165,14 @@ private fun TotalBalanceBanner(totalBalance: Double) {
     ) {
         Column {
             Text(
-                text = "TOTAL ACROSS ALL BANKS",
+                text = stringResource(R.string.total_across_all_banks),
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.White.copy(alpha = 0.7f),
                 letterSpacing = 1.5.sp
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "ETB ${"%.2f".format(totalBalance)}",
+                text = stringResource(R.string.balance_format, totalBalance),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
@@ -202,7 +209,7 @@ private fun BankAccountCard(
         Box(
             modifier = Modifier
                 .width(4.dp)
-                .fillMaxHeight()
+                .matchParentSize()
                 .clip(RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp))
                 .background(accentColor)
         )
@@ -247,7 +254,7 @@ private fun BankAccountCard(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Connected",
+                    text = stringResource(R.string.connected_label),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                 )
@@ -257,7 +264,7 @@ private fun BankAccountCard(
             Column(horizontalAlignment = Alignment.End) {
                 val balance = account.totalIncome - account.totalExpense
                 Text(
-                    text = "ETB ${"%.2f".format(balance)}",
+                    text = stringResource(R.string.balance_format, balance),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = if (balance >= 0) EmeraldGreen else ElectricRose
@@ -301,14 +308,14 @@ private fun EmptyBanksState(modifier: Modifier = Modifier) {
         }
         Spacer(modifier = Modifier.height(20.dp))
         Text(
-            text = "No bank accounts yet",
+            text = stringResource(R.string.no_bank_accounts),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Connect your bank accounts via\nSettings → SMS Auto-Parse",
+            text = stringResource(R.string.connect_bank_desc),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center

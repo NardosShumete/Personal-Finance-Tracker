@@ -3,10 +3,7 @@ package com.portfolio.financetracker.ui.banks
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.portfolio.financetracker.data.local.entity.BankAccountEntity
-import com.portfolio.financetracker.domain.model.Transaction
-import com.portfolio.financetracker.domain.model.TransactionType
 import com.portfolio.financetracker.domain.repository.TransactionRepository
-import com.portfolio.financetracker.ui.dashboard.BankBalance
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
