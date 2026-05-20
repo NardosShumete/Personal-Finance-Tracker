@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,10 +35,10 @@ fun CalendarScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Calendar & Reminders") },
+                title = { Text(stringResource(R.string.calendar_reminders)) },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.menu))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -48,7 +49,7 @@ fun CalendarScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Reminder")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_reminder))
             }
         }
     ) { paddingValues ->
@@ -60,7 +61,7 @@ fun CalendarScreen(
         ) {
             if (reminders.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No reminders set", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.no_reminders_set), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
                 LazyColumn(
@@ -177,7 +178,7 @@ fun AddReminderDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Monthly Reminder") },
+        title = { Text(stringResource(R.string.add_monthly_reminder)) },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
@@ -186,17 +187,17 @@ fun AddReminderDialog(
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Title (e.g. Yebet Kiray)") },
+                    label = { Text(stringResource(R.string.title_hint_yebet_kiray)) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
-                    label = { Text("Amount") },
+                    label = { Text(stringResource(R.string.amount)) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 
-                Text("Category", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.category_label), style = MaterialTheme.typography.labelMedium)
                 val categories = listOf("Housing", "Utilities", "Subscription", "Debt", "Investment")
                 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -216,19 +217,19 @@ fun AddReminderDialog(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = autoGen, onCheckedChange = { autoGen = it })
-                    Text("Auto-generate Expense", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.auto_generate_expense), style = MaterialTheme.typography.bodyMedium)
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = sync, onCheckedChange = { sync = it })
-                    Text("Sync with Google Calendar", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.sync_with_google_calendar), style = MaterialTheme.typography.bodyMedium)
                 }
 
-                Text("Repeat", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.repeat), style = MaterialTheme.typography.labelMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = interval == "NONE", onClick = { interval = "NONE" }, label = { Text("Once") })
-                    FilterChip(selected = interval == "WEEKLY", onClick = { interval = "WEEKLY" }, label = { Text("Weekly") })
-                    FilterChip(selected = interval == "MONTHLY", onClick = { interval = "MONTHLY" }, label = { Text("Monthly") })
+                    FilterChip(selected = interval == "NONE", onClick = { interval = "NONE" }, label = { Text(stringResource(R.string.recurring_period_once)) })
+                    FilterChip(selected = interval == "WEEKLY", onClick = { interval = "WEEKLY" }, label = { Text(stringResource(R.string.recurring_period_weekly)) })
+                    FilterChip(selected = interval == "MONTHLY", onClick = { interval = "MONTHLY" }, label = { Text(stringResource(R.string.recurring_period_monthly)) })
                 }
             }
         },
@@ -239,11 +240,11 @@ fun AddReminderDialog(
                 },
                 enabled = title.isNotBlank()
             ) {
-                Text("Add")
+                Text(stringResource(R.string.add))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
 }
