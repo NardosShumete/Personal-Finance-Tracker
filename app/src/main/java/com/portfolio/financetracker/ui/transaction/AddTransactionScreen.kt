@@ -76,12 +76,12 @@ fun AddTransactionScreen(
                     }
                     showDatePicker = false
                 }) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         ) {
@@ -92,8 +92,8 @@ fun AddTransactionScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Transaction") },
-            text = { Text("Are you sure you want to permanently delete this transaction? This action cannot be undone.") },
+            title = { Text(stringResource(R.string.delete_transaction)) },
+            text = { Text(stringResource(R.string.delete_transaction_confirm)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -102,12 +102,12 @@ fun AddTransactionScreen(
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -234,13 +234,13 @@ fun AddTransactionScreen(
             }
 
             // Recurring Period
-            Text(text = "Recurring Payment", style = MaterialTheme.typography.titleSmall)
+            Text(text = stringResource(R.string.recurring_payment), style = MaterialTheme.typography.titleSmall)
             Row(modifier = Modifier.fillMaxWidth()) {
                 RecurringPeriod.values().forEach { period ->
                     FilterChip(
                         selected = state.recurringPeriod == period,
                         onClick = { viewModel.onEvent(AddTransactionEvent.ChangedRecurring(period)) },
-                        label = { Text(period.name) },
+                        label = { Text(period.toLocalizedString()) },
                         modifier = Modifier.padding(end = 8.dp)
                     )
                 }
@@ -259,7 +259,7 @@ fun AddTransactionScreen(
                     ) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text("Saving receipt...", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.receipt_saving), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             } else if (state.receiptPath != null) {
@@ -284,12 +284,12 @@ fun AddTransactionScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Receipt Attached ✅",
+                                text = stringResource(R.string.receipt_attached),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text = "Tap × to remove",
+                                text = stringResource(R.string.receipt_remove_hint),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -313,7 +313,7 @@ fun AddTransactionScreen(
                 ) {
                     Icon(imageVector = Icons.Default.PhotoCamera, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Attach Receipt Photo")
+                    Text(stringResource(R.string.attach_receipt_photo))
                 }
             }
 

@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -118,13 +119,13 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = "Finance Tracker",
+                    text = stringResource(R.string.finance_tracker_title),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = if (uiState.isLoginMode) "Sign in to your account"
-                           else "Create a new account",
+                    text = if (uiState.isLoginMode) stringResource(R.string.sign_in_to_account)
+                           else stringResource(R.string.create_new_account),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -154,7 +155,7 @@ fun LoginScreen(
                                         username = it
                                         viewModel.onUsernameChanged(it)
                                     },
-                                    label = { Text("Username") },
+                                    label = { Text(stringResource(R.string.username)) },
                                     leadingIcon = {
                                         Icon(Icons.Default.Person, contentDescription = null)
                                     },
@@ -180,7 +181,7 @@ fun LoginScreen(
                                 email = it
                                 viewModel.onEmailChanged(it)
                             },
-                            label = { Text("Email") },
+                            label = { Text(stringResource(R.string.email_address)) },
                             leadingIcon = {
                                 Icon(Icons.Default.Email, contentDescription = null)
                             },
@@ -189,7 +190,7 @@ fun LoginScreen(
                                 if (email.isNotEmpty() && uiState.emailError == null) {
                                     Icon(
                                         Icons.Default.CheckCircle,
-                                        contentDescription = "Valid email",
+                                        contentDescription = stringResource(R.string.valid_email),
                                         tint = Color(0xFF2ECC71)
                                     )
                                 }
@@ -218,7 +219,7 @@ fun LoginScreen(
                                 password = it
                                 viewModel.onPasswordChanged(it, uiState.isLoginMode)
                             },
-                            label = { Text("Password") },
+                            label = { Text(stringResource(R.string.password)) },
                             leadingIcon = {
                                 Icon(Icons.Default.Lock, contentDescription = null)
                             },
@@ -229,7 +230,7 @@ fun LoginScreen(
                                             Icons.Default.VisibilityOff
                                         else Icons.Default.Visibility,
                                         contentDescription = if (passwordVisible)
-                                            "Hide password" else "Show password"
+                                            stringResource(R.string.hide_password) else stringResource(R.string.show_password)
                                     )
                                 }
                             },
@@ -322,7 +323,8 @@ fun LoginScreen(
                         )
                     } else {
                         Text(
-                            text = if (uiState.isLoginMode) "Sign In" else "Create Account",
+                            text = if (uiState.isLoginMode) stringResource(R.string.sign_in)
+                                   else stringResource(R.string.create_account),
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
@@ -337,9 +339,9 @@ fun LoginScreen(
                 }) {
                     Text(
                         text = if (uiState.isLoginMode)
-                            "Don't have an account? Register"
+                            stringResource(R.string.dont_have_account_register)
                         else
-                            "Already have an account? Sign In",
+                            stringResource(R.string.already_have_account_sign_in),
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -364,11 +366,11 @@ private fun PasswordStrengthIndicator(password: String) {
     val score = listOf(hasLength, hasUpper, hasLower, hasDigit, hasSpecial).count { it }
 
     val (label, color) = when (score) {
-        0, 1 -> "Very Weak"  to Color(0xFFE74C3C)
-        2    -> "Weak"       to Color(0xFFE67E22)
-        3    -> "Fair"       to Color(0xFFF1C40F)
-        4    -> "Strong"     to Color(0xFF2ECC71)
-        else -> "Very Strong" to Color(0xFF27AE60)
+        0, 1 -> stringResource(R.string.very_weak)  to Color(0xFFE74C3C)
+        2    -> stringResource(R.string.weak)       to Color(0xFFE67E22)
+        3    -> stringResource(R.string.fair)       to Color(0xFFF1C40F)
+        4    -> stringResource(R.string.strong)     to Color(0xFF2ECC71)
+        else -> stringResource(R.string.very_strong) to Color(0xFF27AE60)
     }
 
     Column(modifier = Modifier.fillMaxWidth().padding(top = 6.dp)) {
@@ -398,7 +400,7 @@ private fun PasswordStrengthIndicator(password: String) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Strength: $label",
+                text = stringResource(R.string.strength_prefix, label),
                 style = MaterialTheme.typography.labelSmall,
                 color = color,
                 fontWeight = FontWeight.SemiBold
@@ -406,11 +408,11 @@ private fun PasswordStrengthIndicator(password: String) {
         }
         Spacer(modifier = Modifier.height(6.dp))
         // Individual rule hints
-        PasswordRuleRow("8+ characters",        hasLength)
-        PasswordRuleRow("Uppercase letter",      hasUpper)
-        PasswordRuleRow("Lowercase letter",      hasLower)
-        PasswordRuleRow("Number",                hasDigit)
-        PasswordRuleRow("Special character",     hasSpecial)
+        PasswordRuleRow(stringResource(R.string.password_rule_length), hasLength)
+        PasswordRuleRow(stringResource(R.string.uppercase_letter), hasUpper)
+        PasswordRuleRow(stringResource(R.string.lowercase_letter), hasLower)
+        PasswordRuleRow(stringResource(R.string.number), hasDigit)
+        PasswordRuleRow(stringResource(R.string.special_character), hasSpecial)
     }
 }
 
@@ -460,7 +462,7 @@ private fun ForgotPasswordDialog(
         },
         title = {
             Text(
-                text = "Reset Password",
+                text = stringResource(R.string.reset_password),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold
             )
@@ -468,14 +470,14 @@ private fun ForgotPasswordDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = "Enter your email and we'll send a reset link.",
+                    text = stringResource(R.string.enter_email_reset_link),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 OutlinedTextField(
                     value = resetEmail,
                     onValueChange = { resetEmail = it; emailError = null },
-                    label = { Text("Email address") },
+                    label = { Text(stringResource(R.string.email_address)) },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                     isError = emailError != null,
                     supportingText = emailError?.let { { Text(it) } },
@@ -497,7 +499,7 @@ private fun ForgotPasswordDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    if (resetEmail.isBlank()) emailError = "Please enter your email."
+                    if (resetEmail.isBlank()) emailError = stringResource(R.string.please_enter_your_email)
                     else onSend(resetEmail)
                 },
                 enabled = !isLoading
@@ -509,13 +511,13 @@ private fun ForgotPasswordDialog(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Send Reset Email")
+                    Text(stringResource(R.string.send_reset_email))
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isLoading) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
