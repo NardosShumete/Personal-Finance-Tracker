@@ -1,15 +1,12 @@
 package com.portfolio.financetracker.ui.dashboard
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,19 +21,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.portfolio.financetracker.core.util.CurrencyHelper
-import com.portfolio.financetracker.core.util.LocalCurrencyCode
 import com.portfolio.financetracker.R
-import com.portfolio.financetracker.domain.model.Transaction
-import com.portfolio.financetracker.ui.dashboard.components.SummaryCard
-import com.portfolio.financetracker.ui.dashboard.components.TransactionItem
+import com.portfolio.financetracker.core.util.LocalCurrencyCode
+import com.portfolio.financetracker.ui.dashboard.components.*
 import com.portfolio.financetracker.ui.theme.*
-import com.portfolio.financetracker.ui.dashboard.BankAccountViewModel
-import com.portfolio.financetracker.ui.dashboard.BankAccountsSection
-import com.portfolio.financetracker.ui.dashboard.AddBankBottomSheet
-import androidx.compose.ui.draw.rotate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,14 +34,17 @@ fun DashboardScreen(
     onNavigateToTransactions: () -> Unit,
     onNavigateToCharts: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
+    onNavigateToSavings: () -> Unit = {},
     onOpenDrawer: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
     bankViewModel: BankAccountViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val isDark = isSystemInDarkTheme()
+    val currencyCode = LocalCurrencyCode.current
     
     var showAddBankSheet by remember { mutableStateOf(false) }
+    var showSetGoalDialog by remember { mutableStateOf(false) }
 
     if (showAddBankSheet) {
         AddBankBottomSheet(
@@ -64,12 +56,23 @@ fun DashboardScreen(
         )
     }
 
+    if (showSetGoalDialog) {
+        SetGoalDialog(
+            initialIncomeGoal = state.monthlyGoal?.incomeGoal ?: 0.0,
+            initialExpenseLimit = state.monthlyGoal?.expenseLimit ?: 0.0,
+            onDismiss = { showSetGoalDialog = false },
+            onConfirm = { income, expense ->
+                viewModel.onEvent(DashboardEvent.SaveGoal(income, expense))
+                showSetGoalDialog = false
+            }
+        )
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Ambient glow — only visible in dark mode
         if (isDark) {
             Box(
                 modifier = Modifier
@@ -90,7 +93,6 @@ fun DashboardScreen(
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
-                // Adaptive top bar
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -167,7 +169,21 @@ fun DashboardScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                item { SummaryCard(state = state) }
+                item { 
+                    SummaryCard(
+                        state = state,
+                        modifier = Modifier.clickable { showSetGoalDialog = true }
+                    ) 
+                }
+
+                item {
+                    SavingsSummaryCard(
+                        totalSavings = state.totalSavings,
+                        activeGoalsCount = state.activeSavingsGoalsCount,
+                        currencyCode = currencyCode,
+                        onClick = onNavigateToSavings
+                    )
+                }
 
                 item {
                     BankAccountsSection(
@@ -196,81 +212,6 @@ fun DashboardScreen(
     }
 }
 
-// ── Sub-composables ───────────────────────────────────────────────────────────
-
-@Composable
-private fun BankBalanceCard(bank: BankBalance) {
-    val currencyCode = LocalCurrencyCode.current
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = bank.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = CurrencyHelper.formatAmount(bank.balance, currencyCode),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = if (bank.balance >= 0) EmeraldGreen else ElectricRose
-                )
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.ArrowUpward,
-                        contentDescription = null,
-                        tint = EmeraldGreen,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = CurrencyHelper.formatAmount(bank.income, currencyCode),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = EmeraldGreen
-                    )
-                }
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.ArrowDownward,
-                        contentDescription = null,
-                        tint = ElectricRose,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = CurrencyHelper.formatAmount(bank.expense, currencyCode),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = ElectricRose
-                    )
-                }
-            }
-        }
-    }
-}
-
 @Composable
 private fun TopBarIconButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
@@ -288,100 +229,6 @@ private fun TopBarIconButton(
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(18.dp)
-        )
-    }
-}
-
-@Composable
-private fun AdaptiveSearchBar(query: String, onQueryChange: (String) -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .border(
-                width = 0.5.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
-                shape = RoundedCornerShape(14.dp)
-            )
-    ) {
-        TextField(
-            value = query,
-            onValueChange = onQueryChange,
-            placeholder = {
-                Text(
-                    "Search transactions...",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 14.sp
-                )
-            },
-            leadingIcon = {
-                Icon(
-                    Icons.Default.Search,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            trailingIcon = {
-                if (query.isNotEmpty()) {
-                    IconButton(onClick = { onQueryChange("") }) {
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = "Clear",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            },
-            singleLine = true,
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor   = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                focusedTextColor        = MaterialTheme.colorScheme.onSurface,
-                unfocusedTextColor      = MaterialTheme.colorScheme.onSurface,
-                focusedIndicatorColor   = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                cursorColor             = MaterialTheme.colorScheme.primary
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Composable
-private fun EmptyTransactionsState() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 48.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .size(72.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Default.Receipt,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(36.dp)
-            )
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "No transactions yet",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = "Tap + to add your first transaction",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

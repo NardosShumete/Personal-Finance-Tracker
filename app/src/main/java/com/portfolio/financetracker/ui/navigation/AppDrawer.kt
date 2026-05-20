@@ -77,6 +77,12 @@ fun AppDrawer(
             onClick = { onNavigateTo(Screen.DashboardScreen.route) }
         )
         DrawerItem(
+            icon = Icons.Default.Savings,
+            label = "Savings Goals",
+            selected = currentRoute == Screen.SavingsGoalScreen.route,
+            onClick = { onNavigateTo(Screen.SavingsGoalScreen.route) }
+        )
+        DrawerItem(
             icon = Icons.Default.CalendarMonth,
             label = "Calendar & Reminders",
             selected = currentRoute == Screen.CalendarScreen.route,

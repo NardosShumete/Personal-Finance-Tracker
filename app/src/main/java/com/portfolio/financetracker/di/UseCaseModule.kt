@@ -1,26 +1,12 @@
 package com.portfolio.financetracker.di
 
-import com.portfolio.financetracker.domain.repository.TransactionRepository
-import com.portfolio.financetracker.domain.use_case.AddTransactionUseCase
-import com.portfolio.financetracker.domain.use_case.DeleteTransactionUseCase
-import com.portfolio.financetracker.domain.use_case.GetTransactionsUseCase
-import com.portfolio.financetracker.domain.use_case.TransactionUseCases
+import com.portfolio.financetracker.domain.repository.*
+import com.portfolio.financetracker.domain.use_case.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
-
-import com.portfolio.financetracker.domain.use_case.GetTransactionUseCase
-import com.portfolio.financetracker.domain.use_case.GetPagedTransactionsUseCase
-
-import com.portfolio.financetracker.domain.repository.GoalRepository
-import com.portfolio.financetracker.domain.use_case.GoalUseCases
-import com.portfolio.financetracker.domain.use_case.GetGoalUseCase
-import com.portfolio.financetracker.domain.use_case.SaveGoalUseCase
-import com.portfolio.financetracker.domain.repository.AiRepository
-import com.portfolio.financetracker.domain.use_case.GetAiInsightsUseCase
-import com.portfolio.financetracker.domain.use_case.GetAiChatResponseUseCase
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -55,6 +41,22 @@ object UseCaseModule {
         return GoalUseCases(
             getGoal = GetGoalUseCase(repository),
             saveGoal = SaveGoalUseCase(repository)
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideSavingsGoalUseCases(repository: SavingsGoalRepository): SavingsGoalUseCases {
+        return SavingsGoalUseCases(
+            getSavingsGoals = GetSavingsGoals(repository),
+            getSavingsGoalById = GetSavingsGoalById(repository),
+            addSavingsGoal = AddSavingsGoal(repository),
+            updateSavingsGoal = UpdateSavingsGoal(repository),
+            deleteSavingsGoal = DeleteSavingsGoal(repository),
+            addMoneyToGoal = AddMoneyToGoal(repository),
+            withdrawMoneyFromGoal = WithdrawMoneyFromGoal(repository),
+            updateGoalStatus = UpdateGoalStatus(repository),
+            getTotalSavings = GetTotalSavings(repository)
         )
     }
 }

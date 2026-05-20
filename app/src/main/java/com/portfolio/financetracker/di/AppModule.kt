@@ -3,17 +3,10 @@ package com.portfolio.financetracker.di
 import android.app.Application
 import androidx.room.Room
 import com.portfolio.financetracker.data.local.FinanceDatabase
-import com.portfolio.financetracker.data.repository.TransactionRepositoryImpl
-import com.portfolio.financetracker.domain.repository.TransactionRepository
-import com.portfolio.financetracker.data.repository.ReminderRepositoryImpl
-import com.portfolio.financetracker.domain.repository.ReminderRepository
-import com.portfolio.financetracker.data.repository.BankAccountRepositoryImpl
-import com.portfolio.financetracker.domain.repository.BankAccountRepository
-import com.portfolio.financetracker.data.repository.CustomBankRepositoryImpl
-import com.portfolio.financetracker.domain.repository.CustomBankRepository
+import com.portfolio.financetracker.data.local.dao.*
+import com.portfolio.financetracker.data.repository.*
+import com.portfolio.financetracker.domain.repository.*
 import com.portfolio.financetracker.data.remote.groq.GroqApi
-import com.portfolio.financetracker.data.repository.AiRepositoryImpl
-import com.portfolio.financetracker.domain.repository.AiRepository
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -41,36 +34,70 @@ object AppModule {
     }
 
     @Provides
+    fun provideTransactionDao(db: FinanceDatabase): TransactionDao = db.transactionDao
+
+    @Provides
+    fun provideMonthlyGoalDao(db: FinanceDatabase): MonthlyGoalDao = db.monthlyGoalDao
+
+    @Provides
+    fun provideCustomBankDao(db: FinanceDatabase): CustomBankDao = db.customBankDao
+
+    @Provides
+    fun provideBankAccountDao(db: FinanceDatabase): BankAccountDao = db.bankAccountDao
+
+    @Provides
+    fun provideReminderDao(db: FinanceDatabase): ReminderDao = db.reminderDao
+
+    @Provides
+    fun provideSavingsGoalDao(db: FinanceDatabase): SavingsGoalDao = db.savingsGoalDao
+    
+    @Provides
+    fun provideSavingsGoalTransactionDao(db: FinanceDatabase): SavingsGoalTransactionDao = db.savingsGoalTransactionDao
+    
+    @Provides
+    fun provideSavingsGoalMilestoneDao(db: FinanceDatabase): SavingsGoalMilestoneDao = db.savingsGoalMilestoneDao
+
+    @Provides
     @Singleton
     fun provideTransactionRepository(
-        db: FinanceDatabase,
+        transactionDao: TransactionDao,
+        bankAccountDao: BankAccountDao,
         dataStoreManager: com.portfolio.financetracker.data.local.DataStoreManager
     ): TransactionRepository {
-        return TransactionRepositoryImpl(db.transactionDao, db.bankAccountDao, dataStoreManager)
+        return TransactionRepositoryImpl(transactionDao, bankAccountDao, dataStoreManager)
     }
 
     @Provides
     @Singleton
-    fun provideGoalRepository(db: FinanceDatabase): com.portfolio.financetracker.domain.repository.GoalRepository {
-        return com.portfolio.financetracker.data.repository.GoalRepositoryImpl(db.monthlyGoalDao)
+    fun provideGoalRepository(dao: MonthlyGoalDao): GoalRepository {
+        return GoalRepositoryImpl(dao)
     }
 
     @Provides
     @Singleton
-    fun provideReminderRepository(db: FinanceDatabase): ReminderRepository {
-        return ReminderRepositoryImpl(db.reminderDao)
+    fun provideReminderRepository(dao: ReminderDao): ReminderRepository {
+        return ReminderRepositoryImpl(dao)
     }
 
     @Provides
     @Singleton
-    fun provideBankAccountRepository(db: FinanceDatabase): BankAccountRepository {
-        return BankAccountRepositoryImpl(db.bankAccountDao)
+    fun provideBankAccountRepository(dao: BankAccountDao): BankAccountRepository {
+        return BankAccountRepositoryImpl(dao)
     }
 
     @Provides
     @Singleton
-    fun provideCustomBankRepository(db: FinanceDatabase): CustomBankRepository {
-        return CustomBankRepositoryImpl(db.customBankDao)
+    fun provideCustomBankRepository(dao: CustomBankDao): CustomBankRepository {
+        return CustomBankRepositoryImpl(dao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSavingsGoalRepository(
+        dao: SavingsGoalDao,
+        transactionDao: SavingsGoalTransactionDao
+    ): SavingsGoalRepository {
+        return SavingsGoalRepositoryImpl(dao, transactionDao)
     }
 
     @Provides

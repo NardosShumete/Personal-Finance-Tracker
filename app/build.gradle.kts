@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.ksp)
     // id("com.google.gms.google-services") // Temporarily disabled to fix missing google-services.json error
     alias(libs.plugins.kotlinSerialization)
-    id("com.google.gms.google-services")
+    // id("com.google.gms.google-services")
 }
 
 android {
