@@ -8,7 +8,7 @@ import javax.inject.Inject
 
 @HiltAndroidApp
 class FinanceTrackerApp : Application(), Configuration.Provider {
-    
+
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
