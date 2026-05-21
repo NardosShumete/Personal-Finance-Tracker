@@ -17,6 +17,9 @@ import com.portfolio.financetracker.data.local.entity.*
         SavingsGoalMilestoneEntity::class
     ],
     version = 14,
+        CategoryBudgetEntity::class
+    ],
+    version = 12,
     exportSchema = false
 )
 abstract class FinanceDatabase : RoomDatabase() {
@@ -28,6 +31,7 @@ abstract class FinanceDatabase : RoomDatabase() {
     abstract val savingsGoalDao: SavingsGoalDao
     abstract val savingsGoalTransactionDao: SavingsGoalTransactionDao
     abstract val savingsGoalMilestoneDao: SavingsGoalMilestoneDao
+    abstract val categoryBudgetDao: CategoryBudgetDao
 
     companion object {
         const val DATABASE_NAME = "finance_db"

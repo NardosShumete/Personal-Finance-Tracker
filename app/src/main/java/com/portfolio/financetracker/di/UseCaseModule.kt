@@ -1,12 +1,16 @@
 package com.portfolio.financetracker.di
 
 import com.portfolio.financetracker.domain.repository.*
+import com.portfolio.financetracker.domain.repository.TransactionRepository
 import com.portfolio.financetracker.domain.use_case.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+
+import com.portfolio.financetracker.domain.repository.GoalRepository
+import com.portfolio.financetracker.domain.repository.AiRepository
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -40,7 +44,10 @@ object UseCaseModule {
     fun provideGoalUseCases(repository: GoalRepository): GoalUseCases {
         return GoalUseCases(
             getGoal = GetGoalUseCase(repository),
-            saveGoal = SaveGoalUseCase(repository)
+            saveGoal = SaveGoalUseCase(repository),
+            getCategoryBudgets = GetCategoryBudgetsUseCase(repository),
+            saveCategoryBudget = SaveCategoryBudgetUseCase(repository),
+            clearBudgetsForMonth = ClearBudgetsForMonthUseCase(repository)
         )
     }
 

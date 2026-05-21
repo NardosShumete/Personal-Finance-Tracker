@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -21,17 +22,18 @@ class DataStoreManager @Inject constructor(private val context: Context) {
         val IS_FIRST_TIME_USER_KEY = booleanPreferencesKey("is_first_time_user")
         val IS_DARK_MODE_KEY       = booleanPreferencesKey("is_dark_mode")
         val IS_ONBOARDED_KEY       = booleanPreferencesKey("is_onboarded")
-        val CURRENCY_CODE_KEY      = androidx.datastore.preferences.core.stringPreferencesKey("currency_code")
-        val LANGUAGE_CODE_KEY      = androidx.datastore.preferences.core.stringPreferencesKey("language_code")
+        val CURRENCY_CODE_KEY      = stringPreferencesKey("currency_code")
+        val LANGUAGE_CODE_KEY      = stringPreferencesKey("language_code")
         // ── Auth / Profile ────────────────────────────────────────────────────
-        val USER_UID_KEY           = androidx.datastore.preferences.core.stringPreferencesKey("user_uid")
-        val USER_EMAIL_KEY         = androidx.datastore.preferences.core.stringPreferencesKey("user_email")
-        val USER_NAME_KEY          = androidx.datastore.preferences.core.stringPreferencesKey("user_name")
+        val USER_UID_KEY           = stringPreferencesKey("user_uid")
+        val USER_EMAIL_KEY         = stringPreferencesKey("user_email")
+        val USER_NAME_KEY          = stringPreferencesKey("user_name")
         val IS_LOGGED_IN_KEY       = booleanPreferencesKey("is_logged_in")
         // ── SMS Account Tracking ──────────────────────────────────────────────
-        /** Comma-separated exact sender addresses the user chose to track */
-        val TRACKED_SENDERS_KEY    = androidx.datastore.preferences.core.stringPreferencesKey("tracked_sms_senders")
+        val TRACKED_SENDERS_KEY    = stringPreferencesKey("tracked_sms_senders")
         val SMS_ENABLED_KEY        = booleanPreferencesKey("sms_tracking_enabled")
+        // ── Budget Alerts ─────────────────────────────────────────────────────
+        val BUDGET_ALERTS_ENABLED_KEY = booleanPreferencesKey("budget_alerts_enabled")
     }
 
     val isBiometricEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
@@ -56,6 +58,10 @@ class DataStoreManager @Inject constructor(private val context: Context) {
 
     val languageCode: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[LANGUAGE_CODE_KEY] ?: "en"
+    }
+
+    val isBudgetAlertsEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[BUDGET_ALERTS_ENABLED_KEY] ?: true
     }
 
     suspend fun setBiometricEnabled(enabled: Boolean) {
@@ -94,6 +100,12 @@ class DataStoreManager @Inject constructor(private val context: Context) {
         }
     }
 
+    suspend fun setBudgetAlertsEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[BUDGET_ALERTS_ENABLED_KEY] = enabled
+        }
+    }
+
     // ── Auth / Profile ────────────────────────────────────────────────────────
 
     val isLoggedIn: Flow<Boolean> = context.dataStore.data.map { preferences ->
@@ -124,7 +136,6 @@ class DataStoreManager @Inject constructor(private val context: Context) {
 
     // ── SMS Account Tracking ──────────────────────────────────────────────────
 
-    /** Emits the set of exact sender addresses the user chose to track */
     val trackedSmsSenders: Flow<Set<String>> = context.dataStore.data.map { prefs ->
         prefs[TRACKED_SENDERS_KEY]
             ?.split(",")
@@ -138,7 +149,6 @@ class DataStoreManager @Inject constructor(private val context: Context) {
         prefs[SMS_ENABLED_KEY] ?: false
     }
 
-    /** Saves the exact sender addresses the user selected */
     suspend fun setTrackedSmsSenders(senders: Set<String>) {
         context.dataStore.edit { prefs ->
             prefs[TRACKED_SENDERS_KEY] = senders.joinToString(",")

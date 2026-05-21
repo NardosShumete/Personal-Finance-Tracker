@@ -44,6 +44,10 @@ object AppModule {
 
     @Provides
     fun provideBankAccountDao(db: FinanceDatabase): BankAccountDao = db.bankAccountDao
+    fun provideBankAccountDao(db: FinanceDatabase): BankAccountDao = db.bankAccountDao
+
+    @Provides
+    fun provideMonthlyGoalDao(db: FinanceDatabase): MonthlyGoalDao = db.monthlyGoalDao
 
     @Provides
     fun provideReminderDao(db: FinanceDatabase): ReminderDao = db.reminderDao
@@ -56,6 +60,10 @@ object AppModule {
     
     @Provides
     fun provideSavingsGoalMilestoneDao(db: FinanceDatabase): SavingsGoalMilestoneDao = db.savingsGoalMilestoneDao
+    fun provideCustomBankDao(db: FinanceDatabase): CustomBankDao = db.customBankDao
+    
+    @Provides
+    fun provideCategoryBudgetDao(db: FinanceDatabase): CategoryBudgetDao = db.categoryBudgetDao
 
     @Provides
     @Singleton
@@ -77,6 +85,8 @@ object AppModule {
     @Singleton
     fun provideReminderRepository(dao: ReminderDao): ReminderRepository {
         return ReminderRepositoryImpl(dao)
+    fun provideGoalRepository(db: FinanceDatabase): GoalRepository {
+        return GoalRepositoryImpl(db.monthlyGoalDao, db.categoryBudgetDao, db.transactionDao)
     }
 
     @Provides
