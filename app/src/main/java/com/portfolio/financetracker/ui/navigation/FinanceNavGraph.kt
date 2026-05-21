@@ -21,6 +21,8 @@ import com.portfolio.financetracker.ui.calendar.CalendarScreen
 import com.portfolio.financetracker.ui.charts.ChartsScreen
 import com.portfolio.financetracker.ui.dashboard.DashboardScreen
 import com.portfolio.financetracker.ui.transaction.AddTransactionScreen
+import com.portfolio.financetracker.ui.savings.SavingsGoalScreen
+import com.portfolio.financetracker.ui.savings.details.SavingsGoalDetailScreen
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -48,7 +50,6 @@ fun FinanceNavGraph(
     val currentRoute = currentEntry?.destination?.route
     val userProfile  by authViewModel.currentUser.collectAsState()
 
-    // Screens that should NOT show the drawer (auth flow)
     val drawerEnabled = currentRoute != Screen.LoginScreen.route
 
     ModalNavigationDrawer(
@@ -79,7 +80,6 @@ fun FinanceNavGraph(
             navController    = navController,
             startDestination = startDestination
         ) {
-            // ── Login / Register ──────────────────────────────────────────────
             composable(route = Screen.LoginScreen.route) {
                 LoginScreen(
                     onAuthSuccess = {
@@ -90,7 +90,6 @@ fun FinanceNavGraph(
                 )
             }
 
-            // ── Dashboard ─────────────────────────────────────────────────────
             composable(route = Screen.DashboardScreen.route) {
                 DashboardScreen(
                     onNavigateToAddTransaction = { transactionId ->
@@ -104,11 +103,32 @@ fun FinanceNavGraph(
                     },
                     onNavigateToCharts = { navController.navigate(Screen.ChartsScreen.route) },
                     onNavigateToSettings = { navController.navigate(Screen.SettingsScreen.route) },
+                    onNavigateToSavings = { navController.navigate(Screen.SavingsGoalScreen.route) },
                     onOpenDrawer = { scope.launch { drawerState.open() } }
                 )
             }
 
-            // ── All Transactions ──────────────────────────────────────────────
+            composable(route = Screen.SavingsGoalScreen.route) {
+                SavingsGoalScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToDetail = { goalId ->
+                        navController.navigate("${Screen.SavingsGoalDetailScreen.route}/$goalId")
+                    },
+                    onOpenDrawer = { scope.launch { drawerState.open() } }
+                )
+            }
+
+            composable(
+                route = "${Screen.SavingsGoalDetailScreen.route}/{goalId}",
+                arguments = listOf(navArgument("goalId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val goalId = backStackEntry.arguments?.getInt("goalId") ?: -1
+                SavingsGoalDetailScreen(
+                    goalId = goalId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
             composable(route = Screen.TransactionsScreen.route) {
                 com.portfolio.financetracker.ui.dashboard.TransactionsScreen(
                     onNavigateToAddTransaction = { transactionId ->
@@ -121,7 +141,6 @@ fun FinanceNavGraph(
                 )
             }
 
-            // ── Add / Edit Transaction ────────────────────────────────────────
             composable(
                 route = Screen.AddEditTransactionScreen.route + "?transactionId={transactionId}",
                 arguments = listOf(
@@ -134,12 +153,10 @@ fun FinanceNavGraph(
                 AddTransactionScreen(onNavigateBack = { navController.popBackStack() })
             }
 
-            // ── Charts ────────────────────────────────────────────────────────
             composable(route = Screen.ChartsScreen.route) {
                 ChartsScreen(onNavigateBack = { navController.popBackStack() })
             }
 
-            // ── Settings ──────────────────────────────────────────────────────
             composable(route = Screen.SettingsScreen.route) {
                 com.portfolio.financetracker.ui.settings.SettingsScreen(
                     onNavigateBack = { navController.popBackStack() },
@@ -149,28 +166,24 @@ fun FinanceNavGraph(
                 )
             }
 
-            // ── Monthly Goals ─────────────────────────────────────────────────
             composable(route = Screen.MonthlyGoalsScreen.route) {
                 com.portfolio.financetracker.ui.settings.goals.MonthlyGoalsScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
 
-            // ── About Us ──────────────────────────────────────────────────────
             composable(route = Screen.AboutUsScreen.route) {
                 com.portfolio.financetracker.ui.settings.about.AboutUsScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
 
-            // ── Pending SMS Review ────────────────────────────────────────────
             composable(route = Screen.PendingReviewScreen.route) {
                 com.portfolio.financetracker.ui.sms.PendingReviewScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
 
-            // ── SMS Account Setup ─────────────────────────────────────────────
             composable(route = Screen.SmsAccountSetupScreen.route) {
                 com.portfolio.financetracker.ui.sms.SmsAccountSetupScreen(
                     onNavigateBack    = { navController.popBackStack() },
@@ -178,7 +191,6 @@ fun FinanceNavGraph(
                 )
             }
 
-            // ── Calendar & Reminders ──────────────────────────────────────────
             composable(route = Screen.CalendarScreen.route) {
                 CalendarScreen(
                     onNavigateBack = { navController.popBackStack() },
@@ -186,7 +198,6 @@ fun FinanceNavGraph(
                 )
             }
 
-            // ── Insights ──────────────────────────────────────────────────────
             composable(route = Screen.InsightsScreen.route) {
                 PlaceholderScreen(
                     title = "Insights",

@@ -12,6 +12,11 @@ import com.portfolio.financetracker.data.local.entity.*
         CustomBankEntity::class,
         BankAccountEntity::class,
         ReminderEntity::class,
+        SavingsGoalEntity::class,
+        SavingsGoalTransactionEntity::class,
+        SavingsGoalMilestoneEntity::class
+    ],
+    version = 14,
         CategoryBudgetEntity::class
     ],
     version = 12,
@@ -23,6 +28,9 @@ abstract class FinanceDatabase : RoomDatabase() {
     abstract val customBankDao: CustomBankDao
     abstract val bankAccountDao: BankAccountDao
     abstract val reminderDao: ReminderDao
+    abstract val savingsGoalDao: SavingsGoalDao
+    abstract val savingsGoalTransactionDao: SavingsGoalTransactionDao
+    abstract val savingsGoalMilestoneDao: SavingsGoalMilestoneDao
     abstract val categoryBudgetDao: CategoryBudgetDao
 
     companion object {

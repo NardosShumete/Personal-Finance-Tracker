@@ -1,5 +1,6 @@
 package com.portfolio.financetracker.di
 
+import com.portfolio.financetracker.domain.repository.*
 import com.portfolio.financetracker.domain.repository.TransactionRepository
 import com.portfolio.financetracker.domain.use_case.*
 import dagger.Module
@@ -47,6 +48,22 @@ object UseCaseModule {
             getCategoryBudgets = GetCategoryBudgetsUseCase(repository),
             saveCategoryBudget = SaveCategoryBudgetUseCase(repository),
             clearBudgetsForMonth = ClearBudgetsForMonthUseCase(repository)
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideSavingsGoalUseCases(repository: SavingsGoalRepository): SavingsGoalUseCases {
+        return SavingsGoalUseCases(
+            getSavingsGoals = GetSavingsGoals(repository),
+            getSavingsGoalById = GetSavingsGoalById(repository),
+            addSavingsGoal = AddSavingsGoal(repository),
+            updateSavingsGoal = UpdateSavingsGoal(repository),
+            deleteSavingsGoal = DeleteSavingsGoal(repository),
+            addMoneyToGoal = AddMoneyToGoal(repository),
+            withdrawMoneyFromGoal = WithdrawMoneyFromGoal(repository),
+            updateGoalStatus = UpdateGoalStatus(repository),
+            getTotalSavings = GetTotalSavings(repository)
         )
     }
 }

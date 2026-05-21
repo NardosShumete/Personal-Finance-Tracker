@@ -37,6 +37,13 @@ object AppModule {
     fun provideTransactionDao(db: FinanceDatabase): TransactionDao = db.transactionDao
 
     @Provides
+    fun provideMonthlyGoalDao(db: FinanceDatabase): MonthlyGoalDao = db.monthlyGoalDao
+
+    @Provides
+    fun provideCustomBankDao(db: FinanceDatabase): CustomBankDao = db.customBankDao
+
+    @Provides
+    fun provideBankAccountDao(db: FinanceDatabase): BankAccountDao = db.bankAccountDao
     fun provideBankAccountDao(db: FinanceDatabase): BankAccountDao = db.bankAccountDao
 
     @Provides
@@ -46,6 +53,13 @@ object AppModule {
     fun provideReminderDao(db: FinanceDatabase): ReminderDao = db.reminderDao
 
     @Provides
+    fun provideSavingsGoalDao(db: FinanceDatabase): SavingsGoalDao = db.savingsGoalDao
+    
+    @Provides
+    fun provideSavingsGoalTransactionDao(db: FinanceDatabase): SavingsGoalTransactionDao = db.savingsGoalTransactionDao
+    
+    @Provides
+    fun provideSavingsGoalMilestoneDao(db: FinanceDatabase): SavingsGoalMilestoneDao = db.savingsGoalMilestoneDao
     fun provideCustomBankDao(db: FinanceDatabase): CustomBankDao = db.customBankDao
     
     @Provides
@@ -54,34 +68,46 @@ object AppModule {
     @Provides
     @Singleton
     fun provideTransactionRepository(
-        db: FinanceDatabase,
+        transactionDao: TransactionDao,
+        bankAccountDao: BankAccountDao,
         dataStoreManager: com.portfolio.financetracker.data.local.DataStoreManager
     ): TransactionRepository {
-        return TransactionRepositoryImpl(db.transactionDao, db.bankAccountDao, dataStoreManager)
+        return TransactionRepositoryImpl(transactionDao, bankAccountDao, dataStoreManager)
     }
 
     @Provides
     @Singleton
+    fun provideGoalRepository(dao: MonthlyGoalDao): GoalRepository {
+        return GoalRepositoryImpl(dao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideReminderRepository(dao: ReminderDao): ReminderRepository {
+        return ReminderRepositoryImpl(dao)
     fun provideGoalRepository(db: FinanceDatabase): GoalRepository {
         return GoalRepositoryImpl(db.monthlyGoalDao, db.categoryBudgetDao, db.transactionDao)
     }
 
     @Provides
     @Singleton
-    fun provideReminderRepository(db: FinanceDatabase): ReminderRepository {
-        return ReminderRepositoryImpl(db.reminderDao)
+    fun provideBankAccountRepository(dao: BankAccountDao): BankAccountRepository {
+        return BankAccountRepositoryImpl(dao)
     }
 
     @Provides
     @Singleton
-    fun provideBankAccountRepository(db: FinanceDatabase): BankAccountRepository {
-        return BankAccountRepositoryImpl(db.bankAccountDao)
+    fun provideCustomBankRepository(dao: CustomBankDao): CustomBankRepository {
+        return CustomBankRepositoryImpl(dao)
     }
 
     @Provides
     @Singleton
-    fun provideCustomBankRepository(db: FinanceDatabase): CustomBankRepository {
-        return CustomBankRepositoryImpl(db.customBankDao)
+    fun provideSavingsGoalRepository(
+        dao: SavingsGoalDao,
+        transactionDao: SavingsGoalTransactionDao
+    ): SavingsGoalRepository {
+        return SavingsGoalRepositoryImpl(dao, transactionDao)
     }
 
     @Provides

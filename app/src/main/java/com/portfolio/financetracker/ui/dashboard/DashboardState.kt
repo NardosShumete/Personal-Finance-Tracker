@@ -11,7 +11,9 @@ data class DashboardState(
     val searchQuery: String = "",
     val isLoading: Boolean = false,
     val monthlyGoal: MonthlyGoal? = null,
-    val bankBalances: Map<String, BankBalance> = emptyMap()
+    val bankBalances: Map<String, BankBalance> = emptyMap(),
+    val totalSavings: Double = 0.0,
+    val activeSavingsGoalsCount: Int = 0
 )
 
 data class BankBalance(
