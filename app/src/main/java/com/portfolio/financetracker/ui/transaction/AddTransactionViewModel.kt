@@ -97,8 +97,7 @@ class AddTransactionViewModel @Inject constructor(
                 _state.value = state.value.copy(recurringPeriod = event.period)
             }
             is AddTransactionEvent.RemoveReceipt -> {
-                // Delete the file from storage when user removes the receipt
-                FileHelper.deleteReceiptFile(state.value.receiptPath)
+                // Only clear from state. Deletion happens on Save to avoid data loss if user cancels.
                 _state.value = state.value.copy(receiptPath = null)
             }
             is AddTransactionEvent.DeleteTransaction -> {
@@ -117,6 +116,14 @@ class AddTransactionViewModel @Inject constructor(
             is AddTransactionEvent.SaveTransaction -> {
                 viewModelScope.launch {
                     try {
+                        val isEdit = state.value.id != null
+                        if (isEdit) {
+                            val original = transactionUseCases.getTransaction(state.value.id!!)
+                            if (original != null && original.receiptPath != state.value.receiptPath) {
+                                FileHelper.deleteReceiptFile(original.receiptPath)
+                            }
+                        }
+                        
                         transactionUseCases.addTransaction(
                             Transaction(
                                 id              = state.value.id ?: 0,

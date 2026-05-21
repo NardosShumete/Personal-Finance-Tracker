@@ -11,10 +11,12 @@ import javax.inject.Inject
 /**
  * Processes a single incoming SMS.
  *
- * Only processes the SMS if:
- * 1. SMS tracking is enabled by the user
- * 2. The sender is in the user's tracked senders list
- * 3. The SMS body matches a known bank transaction format
+ * Gate logic (in order):
+ * 1. SMS tracking must be enabled by the user.
+ * 2. The SMS body must match a known bank format (body-based detection).
+ * 3. If the user has configured a tracked-senders list, the sender must be in it.
+ *    If no senders are configured yet, we allow any body-matched SMS through
+ *    so that CBE/BOA/Telebirr all work without requiring the setup screen first.
  */
 class ProcessSmsUseCase @Inject constructor(
     private val repository: TransactionRepository,
@@ -25,16 +27,29 @@ class ProcessSmsUseCase @Inject constructor(
         body: String,
         receivedAt: Long
     ): Result<Boolean> = runCatching {
-        // Check if SMS tracking is enabled
+
+        // Gate 1: SMS tracking must be enabled
         val isEnabled = dataStoreManager.isSmsTrackingEnabled.first()
         if (!isEnabled) return Result.success(false)
 
-        // Get the user's explicitly chosen senders
-        val trackedSenders = dataStoreManager.trackedSmsSenders.first()
-        if (trackedSenders.isEmpty()) return Result.success(false)
+        // Gate 2: body must match a known bank format
+        // This is the primary filter — if the body doesn't look like a bank SMS,
+        // we drop it immediately without any DB or DataStore access.
+        val format = SmsParser.detectBankFormat(body)
+        if (format == SmsParser.BankFormat.UNKNOWN) return Result.success(false)
 
-        // Parse — will return null if sender not tracked or body doesn't match
-        val parsed = SmsParser.parse(sender, body, receivedAt, trackedSenders)
+        // Gate 3: sender allowlist (optional)
+        // If the user has gone through the SMS setup screen and selected specific
+        // senders, only process those. If the list is empty (setup not done yet),
+        // allow all body-matched SMS through so banks work out of the box.
+        val trackedSenders = dataStoreManager.trackedSmsSenders.first()
+        if (trackedSenders.isNotEmpty() && !SmsParser.isTrackedSender(sender, trackedSenders)) {
+            return Result.success(false)
+        }
+
+        // Parse — pass empty set so the sender check inside SmsParser is skipped
+        // (we already checked it above with better logic)
+        val parsed = SmsParser.parse(sender, body, receivedAt, emptySet())
             ?: return Result.success(false)
 
         val transaction = Transaction(

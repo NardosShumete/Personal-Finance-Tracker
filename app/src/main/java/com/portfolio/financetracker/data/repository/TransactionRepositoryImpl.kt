@@ -98,20 +98,11 @@ class TransactionRepositoryImpl(
 
     override suspend fun confirmTransaction(id: Int) {
         val transaction = dao.getTransactionById(id) ?: return
+        // Mark as confirmed — this is all we do here.
+        // Bank account totals are recalculated from scratch by BankAccountViewModel.refreshTotals()
+        // which is triggered by the Flow update. Doing an additive update here AND a full
+        // recalculate in refreshTotals() would double-count the same transaction.
         dao.confirmTransaction(id)
-        
-        if (transaction.source == "SMS") {
-            val bankName = transaction.bankName ?: transaction.category.substringBefore(" Transfer").trim()
-            if (bankName.isNotEmpty()) {
-                val income = if (transaction.type == "INCOME") transaction.amount else 0.0
-                val expense = if (transaction.type == "EXPENSE") transaction.amount else 0.0
-                
-                val account = bankAccountDao.getBankAccountByShortName(bankName)
-                if (account != null) {
-                    bankAccountDao.updateTotals(bankName, income, expense)
-                }
-            }
-        }
     }
 
     /**

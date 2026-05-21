@@ -14,5 +14,6 @@ class BankAccountRepositoryImpl @Inject constructor(
     override suspend fun getBankAccountBySenderId(senderId: String): BankAccountEntity? = dao.getBankAccountBySenderId(senderId)
     override suspend fun insertBankAccount(bankAccount: BankAccountEntity) = dao.insertBankAccount(bankAccount)
     override suspend fun updateBankAccount(bankAccount: BankAccountEntity) = dao.updateBankAccount(bankAccount)
-    override suspend fun updateTotals(id: Int, income: Double, expense: Double, count: Int) = dao.updateTotals(id, income, expense, count)
+    override suspend fun updateTotals(id: Int, income: Double, expense: Double, count: Int, lastKnownBalance: Double?) = dao.updateTotals(id, income, expense, count, lastKnownBalance)
+    override suspend fun deleteBankAccount(id: Int) = dao.deleteBankAccount(id)
 }

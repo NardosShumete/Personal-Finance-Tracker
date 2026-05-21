@@ -1,15 +1,10 @@
 package com.portfolio.financetracker.di
 
+import com.google.firebase.auth.FirebaseAuth
 import com.portfolio.financetracker.data.local.DataStoreManager
 import com.portfolio.financetracker.data.repository.AuthRepositoryImpl
 import com.portfolio.financetracker.domain.repository.AuthRepository
-import com.portfolio.financetracker.domain.use_case.auth.AuthUseCases
-import com.portfolio.financetracker.domain.use_case.auth.GetCurrentUserUseCase
-import com.portfolio.financetracker.domain.use_case.auth.RegisterUseCase
-import com.portfolio.financetracker.domain.use_case.auth.SignInUseCase
-import com.portfolio.financetracker.domain.use_case.auth.SignOutUseCase
-import com.portfolio.financetracker.domain.use_case.auth.SendPasswordResetUseCase
-import com.portfolio.financetracker.domain.use_case.auth.ValidateAuthInputUseCase
+import com.portfolio.financetracker.domain.use_case.auth.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,9 +17,14 @@ object AuthModule {
 
     @Provides
     @Singleton
+    fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
+
+    @Provides
+    @Singleton
     fun provideAuthRepository(
+        firebaseAuth: FirebaseAuth,
         dataStore: DataStoreManager
-    ): AuthRepository = AuthRepositoryImpl(dataStore)
+    ): AuthRepository = AuthRepositoryImpl(firebaseAuth, dataStore)
 
     @Provides
     @Singleton
@@ -34,6 +34,8 @@ object AuthModule {
         signOut            = SignOutUseCase(repository),
         getCurrentUser     = GetCurrentUserUseCase(repository),
         sendPasswordReset  = SendPasswordResetUseCase(repository),
-        validateAuthInput  = ValidateAuthInputUseCase()
+        validateAuthInput  = ValidateAuthInputUseCase(),
+        resendVerificationEmail = ResendVerificationEmailUseCase(repository),
+        reloadAndCheckVerification = ReloadAndCheckVerificationUseCase(repository)
     )
 }

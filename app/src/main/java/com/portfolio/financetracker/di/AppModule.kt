@@ -39,9 +39,9 @@ object AppModule {
             com.portfolio.financetracker.data.local.MIGRATION_9_10,
             com.portfolio.financetracker.data.local.MIGRATION_10_11,
             com.portfolio.financetracker.data.local.MIGRATION_11_12,
-            com.portfolio.financetracker.data.local.MIGRATION_12_13
+            com.portfolio.financetracker.data.local.MIGRATION_12_13,
+            com.portfolio.financetracker.data.local.MIGRATION_13_14
         )
-        .fallbackToDestructiveMigration()
         .build()
     }
 

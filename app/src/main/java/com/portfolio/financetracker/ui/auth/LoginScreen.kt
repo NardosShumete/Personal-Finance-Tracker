@@ -41,15 +41,21 @@ fun LoginScreen(
     val focusManager = LocalFocusManager.current
     val snackbarHost = remember { SnackbarHostState() }
 
-    LaunchedEffect(uiState.isSuccess) {
-        if (uiState.isSuccess) onAuthSuccess()
+    // Navigation is handled by FinanceNavGraph via eventFlow.
+    // This LaunchedEffect is kept as a safety net but onAuthSuccess is a no-op.
+    LaunchedEffect(uiState.authResult) {
+        if (uiState.authResult is com.portfolio.financetracker.domain.model.AuthResult.Success) {
+            onAuthSuccess()
+        }
     }
 
     LaunchedEffect(resetState.isSuccess, resetState.errorMessage) {
+        // Guard: don't fire on initial composition when both are default values
+        if (!resetState.isSuccess && resetState.errorMessage == null) return@LaunchedEffect
         when {
             resetState.isSuccess -> {
                 snackbarHost.showSnackbar(
-                    message  = "Reset email sent! Check your inbox.",
+                    message  = "Password reset email sent! Check your inbox.",
                     duration = SnackbarDuration.Long
                 )
                 viewModel.consumeResetState()
@@ -73,14 +79,19 @@ fun LoginScreen(
 
     if (showForgotDialog) {
         ForgotPasswordDialog(
-            prefillEmail = email,
-            isLoading    = resetState.isLoading,
-            onDismiss    = { showForgotDialog = false },
-            onSend       = { resetEmail ->
-                viewModel.sendPasswordReset(resetEmail)
-                showForgotDialog = false
-            }
+            prefillEmail  = email,
+            resetState    = resetState,
+            onDismiss     = { if (!resetState.isLoading) showForgotDialog = false },
+            onSend        = { resetEmail -> viewModel.sendPasswordReset(resetEmail) }
         )
+    }
+
+    // Close the dialog automatically when the reset succeeds or fails
+    // (the snackbar LaunchedEffect above will show the result message)
+    LaunchedEffect(resetState.isSuccess, resetState.errorMessage) {
+        if (resetState.isSuccess || resetState.errorMessage != null) {
+            showForgotDialog = false
+        }
     }
 
     Scaffold(
@@ -445,71 +456,88 @@ private fun PasswordRuleRow(label: String, passed: Boolean) {
 @Composable
 private fun ForgotPasswordDialog(
     prefillEmail: String,
-    isLoading: Boolean,
+    resetState: PasswordResetState,
     onDismiss: () -> Unit,
     onSend: (String) -> Unit
 ) {
     var resetEmail by remember { mutableStateOf(prefillEmail) }
     var emailError by remember { mutableStateOf<String?>(null) }
-    val emailRequiredError = stringResource(R.string.please_enter_your_email)
+
+    // Validate email format in real-time as the user types
+    fun validateAndSend() {
+        val trimmed = resetEmail.trim()
+        when {
+            trimmed.isBlank() -> {
+                emailError = "Please enter your email address."
+            }
+            !android.util.Patterns.EMAIL_ADDRESS.matcher(trimmed).matches() -> {
+                emailError = "Please enter a valid email address."
+            }
+            else -> {
+                emailError = null
+                onSend(trimmed)
+            }
+        }
+    }
 
     AlertDialog(
-        onDismissRequest = { if (!isLoading) onDismiss() },
+        onDismissRequest = { if (!resetState.isLoading) onDismiss() },
         icon = {
             Icon(
-                imageVector = Icons.Default.Email,
+                imageVector        = Icons.Default.Email,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
+                tint               = MaterialTheme.colorScheme.primary
             )
         },
         title = {
             Text(
-                text = stringResource(R.string.reset_password),
-                style = MaterialTheme.typography.titleLarge,
+                text       = stringResource(R.string.reset_password),
+                style      = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold
             )
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = stringResource(R.string.enter_email_reset_link),
+                    text  = stringResource(R.string.enter_email_reset_link),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 OutlinedTextField(
-                    value = resetEmail,
-                    onValueChange = { resetEmail = it; emailError = null },
-                    label = { Text(stringResource(R.string.email_address)) },
-                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
-                    isError = emailError != null,
-                    supportingText = emailError?.let { { Text(it) } },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    value         = resetEmail,
+                    onValueChange = {
+                        resetEmail = it
+                        // Clear error as soon as the user starts correcting
+                        if (emailError != null) emailError = null
+                    },
+                    label        = { Text(stringResource(R.string.email_address)) },
+                    leadingIcon  = { Icon(Icons.Default.Email, contentDescription = null) },
+                    isError      = emailError != null,
+                    supportingText = emailError?.let { err ->
+                        { Text(err, color = MaterialTheme.colorScheme.error) }
+                    },
+                    singleLine   = true,
+                    enabled      = !resetState.isLoading,
+                    modifier     = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
-                        imeAction = ImeAction.Done
+                        imeAction    = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(
-                        onDone = {
-                            if (resetEmail.isNotBlank()) onSend(resetEmail)
-                            else emailError = emailRequiredError
-                        }
+                        onDone = { validateAndSend() }
                     )
                 )
             }
         },
         confirmButton = {
             Button(
-                onClick = {
-                    if (resetEmail.isBlank()) emailError = emailRequiredError
-                    else onSend(resetEmail)
-                },
-                enabled = !isLoading
+                onClick  = { validateAndSend() },
+                enabled  = !resetState.isLoading
             ) {
-                if (isLoading) {
+                if (resetState.isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        modifier    = Modifier.size(16.dp),
+                        color       = MaterialTheme.colorScheme.onPrimary,
                         strokeWidth = 2.dp
                     )
                 } else {
@@ -518,7 +546,10 @@ private fun ForgotPasswordDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isLoading) {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !resetState.isLoading
+            ) {
                 Text(stringResource(R.string.cancel))
             }
         }

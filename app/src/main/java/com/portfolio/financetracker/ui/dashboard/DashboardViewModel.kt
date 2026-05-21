@@ -16,12 +16,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
@@ -33,79 +32,101 @@ class DashboardViewModel @Inject constructor(
     private val goalUseCases: GoalUseCases
 ) : ViewModel() {
 
-    // ── Search query ──────────────────────────────────────────────────────────
-    private val _searchQuery = MutableStateFlow("")
+    private val _searchQuery   = MutableStateFlow("")
+    private val _selectedPeriod = MutableStateFlow(SummaryPeriod.THIS_MONTH)
 
-    // ── Paged transaction list ────────────────────────────────────────────────
-    // cachedIn(viewModelScope) keeps the paged data alive across recompositions
-    // and survives configuration changes without re-querying the DB.
     val pagedTransactions: Flow<PagingData<Transaction>> =
-        transactionUseCases.getPagedTransactions()
-            .cachedIn(viewModelScope)
+        transactionUseCases.getPagedTransactions().cachedIn(viewModelScope)
 
-    // ── Summary state (balance / income / expense / goal) ────────────────────
-    // Uses stateIn() so the Flow is only collected once and the latest value
-    // is replayed instantly to new subscribers (e.g. after recomposition).
-    // SharingStarted.WhileSubscribed(5_000) keeps the upstream alive for 5 s
-    // after the last subscriber drops — survives brief config changes cheaply.
     val state: StateFlow<DashboardState> = combine(
-        // Full list needed for accurate totals (paged data is a subset)
         transactionUseCases.getTransactions(),
         _searchQuery,
+        _selectedPeriod,
         goalUseCases.getGoal(
             SimpleDateFormat("MM-yyyy", Locale.getDefault()).format(Date())
         )
-    ) { allTransactions, query, goal ->
-        val filtered = if (query.isBlank()) {
-            allTransactions
-        } else {
-            allTransactions.filter {
-                it.category.contains(query, ignoreCase = true) ||
-                it.note.contains(query, ignoreCase = true)
-            }
+    ) { allTransactions, query, period, goal ->
+
+        // Only confirmed transactions affect any totals
+        val confirmed = allTransactions.filter { !it.isPending }
+
+        // ── Time boundaries ───────────────────────────────────────────────────
+        val now = Calendar.getInstance()
+
+        val startOfToday = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        val startOfMonth = Calendar.getInstance().apply {
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        // ── Period-filtered subsets ───────────────────────────────────────────
+        val todayTxns = confirmed.filter { it.date >= startOfToday }
+        val monthTxns = confirmed.filter { it.date >= startOfMonth }
+
+        // ── All-time totals (used for net balance) ────────────────────────────
+        val totalIncome  = confirmed.filter { it.type == TransactionType.INCOME  }.sumOf { it.amount }
+        val totalExpense = confirmed.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
+
+        // ── Today totals ──────────────────────────────────────────────────────
+        val todayIncome  = todayTxns.filter { it.type == TransactionType.INCOME  }.sumOf { it.amount }
+        val todayExpense = todayTxns.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
+
+        // ── This month totals ─────────────────────────────────────────────────
+        val monthIncome  = monthTxns.filter { it.type == TransactionType.INCOME  }.sumOf { it.amount }
+        val monthExpense = monthTxns.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
+
+        // ── Search filter (list display only — never affects totals) ──────────
+        val displayList = if (query.isBlank()) confirmed
+        else confirmed.filter {
+            it.category.contains(query, ignoreCase = true) ||
+            it.note.contains(query, ignoreCase = true)
         }
 
-        val income  = filtered.filter { it.type == TransactionType.INCOME  }.sumOf { it.amount }
-        val expense = filtered.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
-
-        val bankBalances = allTransactions
+        // ── Per-bank balances ─────────────────────────────────────────────────
+        val bankBalances = confirmed
             .filter { it.bankName != null }
             .groupBy { it.bankName!! }
-            .mapValues { (bankName, transactions) ->
-                val bankIncome = transactions.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }
-                val bankExpense = transactions.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
-                BankBalance(
-                    name = bankName,
-                    balance = bankIncome - bankExpense,
-                    income = bankIncome,
-                    expense = bankExpense
-                )
+            .mapValues { (bankName, txns) ->
+                val bIncome  = txns.filter { it.type == TransactionType.INCOME  }.sumOf { it.amount }
+                val bExpense = txns.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
+                BankBalance(name = bankName, balance = bIncome - bExpense, income = bIncome, expense = bExpense)
             }
 
         DashboardState(
-            totalBalance = income - expense,
-            totalIncome  = income,
-            totalExpense = expense,
-            searchQuery  = query,
-            monthlyGoal  = goal,
-            bankBalances = bankBalances
+            totalBalance    = totalIncome - totalExpense,
+            totalIncome     = totalIncome,
+            totalExpense    = totalExpense,
+            todayIncome     = todayIncome,
+            todayExpense    = todayExpense,
+            monthIncome     = monthIncome,
+            monthExpense    = monthExpense,
+            selectedPeriod  = period,
+            searchQuery     = query,
+            monthlyGoal     = goal,
+            bankBalances    = bankBalances
         )
     }.stateIn(
-        scope            = viewModelScope,
-        started          = SharingStarted.WhileSubscribed(5_000),
-        initialValue     = DashboardState()
+        scope        = viewModelScope,
+        started      = SharingStarted.WhileSubscribed(5_000),
+        initialValue = DashboardState()
     )
 
-    // ── Events ────────────────────────────────────────────────────────────────
     fun onEvent(event: DashboardEvent) {
         when (event) {
-            is DashboardEvent.OnSearchQueryChanged -> {
-                _searchQuery.value = event.query
-            }
-            is DashboardEvent.DeleteTransaction -> {
+            is DashboardEvent.OnSearchQueryChanged -> _searchQuery.value = event.query
+            is DashboardEvent.OnPeriodChanged      -> _selectedPeriod.value = event.period
+            is DashboardEvent.DeleteTransaction    -> {
                 viewModelScope.launch {
                     transactionUseCases.deleteTransaction(event.transaction)
-                    // Room invalidates the PagingSource automatically after delete
                 }
             }
         }

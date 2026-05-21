@@ -7,7 +7,9 @@ import com.portfolio.financetracker.core.sms.buildParsedSms
 import com.portfolio.financetracker.domain.model.TransactionType
 
 object AbyssiniaSmsParser : BankSmsParser {
-    override val bankName = "Abyssinia"
+    // bankName must match BankAccountEntity.shortName = "BOA" so that
+    // transactions are correctly attributed to the Bank of Abyssinia card.
+    override val bankName = "BOA"
     override val format   = SmsParser.BankFormat.ABYSSINIA
 
     private val AMOUNT_RE  = Regex("""\b(?:Dr|Cr)\s+ETB\s+([\d,]+\.?\d*)""", RegexOption.IGNORE_CASE)

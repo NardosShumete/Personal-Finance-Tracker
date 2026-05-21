@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -17,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -26,16 +26,17 @@ import com.portfolio.financetracker.R
 import com.portfolio.financetracker.core.util.CurrencyHelper
 import com.portfolio.financetracker.core.util.LocalCurrencyCode
 import com.portfolio.financetracker.ui.dashboard.DashboardState
+import com.portfolio.financetracker.ui.dashboard.SummaryPeriod
 import com.portfolio.financetracker.ui.theme.*
 
 @Composable
 fun SummaryCard(
     state: DashboardState,
+    onPeriodChange: (SummaryPeriod) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val currencyCode = LocalCurrencyCode.current
 
-    // Mesh gradient brush — Blue → Purple → Teal
     val meshGradient = Brush.linearGradient(
         colorStops = arrayOf(
             0.0f to GradientBlue,
@@ -58,23 +59,56 @@ fun SummaryCard(
                 shape = RoundedCornerShape(24.dp)
             )
     ) {
-        // Subtle radial glow overlay for depth
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp)
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.08f),
-                            Color.Transparent
-                        ),
+                        colors = listOf(Color.White.copy(alpha = 0.08f), Color.Transparent),
                         radius = 600f
                     )
                 )
         )
 
         Column(modifier = Modifier.padding(24.dp)) {
+
+            // ── Period toggle ─────────────────────────────────────────────────
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color.White.copy(alpha = 0.10f)),
+            ) {
+                SummaryPeriod.entries.forEach { period ->
+                    val isSelected = state.selectedPeriod == period
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                if (isSelected) Color.White.copy(alpha = 0.20f)
+                                else Color.Transparent
+                            )
+                            .clickable { onPeriodChange(period) }
+                            .padding(vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = when (period) {
+                                SummaryPeriod.TODAY      -> "Today"
+                                SummaryPeriod.THIS_MONTH -> "Month"
+                                SummaryPeriod.ALL_TIME   -> "All"
+                            },
+                            style      = MaterialTheme.typography.labelSmall,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            color      = if (isSelected) Color.White else Color.White.copy(alpha = 0.55f)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
 
             // ── Label ─────────────────────────────────────────────────────────
             Text(
@@ -84,9 +118,9 @@ fun SummaryCard(
                 letterSpacing = 2.sp
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            // ── Hero balance ──────────────────────────────────────────────────
+            // ── Hero balance (always all-time net) ────────────────────────────
             Text(
                 text = CurrencyHelper.formatAmount(state.totalBalance, currencyCode),
                 style = MaterialTheme.typography.displaySmall,
@@ -95,42 +129,41 @@ fun SummaryCard(
                 letterSpacing = (-1).sp
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // ── Income / Expense row ──────────────────────────────────────────
+            // ── Income / Expense row (period-filtered) ────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 BalancePill(
-                    label = stringResource(R.string.income),
-                    amount = CurrencyHelper.formatAmount(state.totalIncome, currencyCode),
-                    color = EmeraldGreen,
+                    label    = stringResource(R.string.income),
+                    amount   = CurrencyHelper.formatAmount(state.displayIncome, currencyCode),
+                    color    = EmeraldGreen,
                     isIncome = true,
                     modifier = Modifier.weight(1f)
                 )
                 BalancePill(
-                    label = stringResource(R.string.expense),
-                    amount = CurrencyHelper.formatAmount(state.totalExpense, currencyCode),
-                    color = ElectricRose,
+                    label    = stringResource(R.string.expense),
+                    amount   = CurrencyHelper.formatAmount(state.displayExpense, currencyCode),
+                    color    = ElectricRose,
                     isIncome = false,
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            // ── Budget progress ───────────────────────────────────────────────
+            // ── Budget progress (uses month expense vs goal) ───────────────────
             state.monthlyGoal?.let { goal ->
                 if (goal.expenseLimit > 0) {
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    val rawProgress = (state.totalExpense / goal.expenseLimit).toFloat()
+                    val rawProgress = (state.monthExpense / goal.expenseLimit).toFloat()
                         .coerceIn(0f, 1f)
 
-                    // Animate the progress bar on first composition
                     val animatedProgress by animateFloatAsState(
-                        targetValue = rawProgress,
+                        targetValue   = rawProgress,
                         animationSpec = tween(1200, easing = FastOutSlowInEasing),
-                        label = "budget_progress"
+                        label         = "budget_progress"
                     )
 
                     val barColor = when {
@@ -140,26 +173,25 @@ fun SummaryCard(
                     }
 
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier              = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment     = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = stringResource(R.string.budget_usage),
+                            text  = stringResource(R.string.budget_usage),
                             style = MaterialTheme.typography.labelSmall,
                             color = Color.White.copy(alpha = 0.7f)
                         )
                         Text(
-                            text = "${(rawProgress * 100).toInt()}%",
-                            style = MaterialTheme.typography.labelMedium,
+                            text       = "${(rawProgress * 100).toInt()}%",
+                            style      = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
-                            color = barColor
+                            color      = barColor
                         )
                     }
 
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    // Custom animated progress bar with rounded cap
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -182,18 +214,18 @@ fun SummaryCard(
 
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    val remaining = (goal.expenseLimit - state.totalExpense).coerceAtLeast(0.0)
+                    val remaining = (goal.expenseLimit - state.monthExpense).coerceAtLeast(0.0)
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier              = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "${CurrencyHelper.formatAmount(state.totalExpense, currencyCode)} ${stringResource(R.string.spent)}",
+                            text  = "${CurrencyHelper.formatAmount(state.monthExpense, currencyCode)} ${stringResource(R.string.spent)}",
                             style = MaterialTheme.typography.labelSmall,
                             color = Color.White.copy(alpha = 0.6f)
                         )
                         Text(
-                            text = "${CurrencyHelper.formatAmount(remaining, currencyCode)} ${stringResource(R.string.left)}",
+                            text  = "${CurrencyHelper.formatAmount(remaining, currencyCode)} ${stringResource(R.string.left)}",
                             style = MaterialTheme.typography.labelSmall,
                             color = Color.White.copy(alpha = 0.6f)
                         )

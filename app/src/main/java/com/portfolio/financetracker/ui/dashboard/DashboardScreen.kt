@@ -169,7 +169,10 @@ fun DashboardScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                item { SummaryCard(state = state) }
+                item { SummaryCard(
+                    state          = state,
+                    onPeriodChange = { viewModel.onEvent(DashboardEvent.OnPeriodChanged(it)) }
+                ) }
 
                 item {
                     BankAccountsSection(
