@@ -35,6 +35,8 @@ class MonthlyGoalsViewModelTest {
         
         coEvery { goalUseCases.getGoal(any()) } returns flowOf(null)
         coEvery { goalUseCases.getCategoryBudgets(any()) } returns flowOf(emptyList())
+        coEvery { goalUseCases.saveGoal(any()) } returns Unit
+        coEvery { goalUseCases.saveCategoryBudget(any()) } returns Unit
         coEvery { dataStoreManager.isBudgetAlertsEnabled } returns flowOf(false)
         
         viewModel = MonthlyGoalsViewModel(goalUseCases, dataStoreManager)

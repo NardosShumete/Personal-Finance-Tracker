@@ -38,49 +38,47 @@ class TransactionDaoTest {
         database.close()
     }
 
+    // Helper to build a minimal valid TransactionEntity
+    private fun makeTransaction(
+        id: Int,
+        amount: Double,
+        category: String,
+        type: String,
+        note: String = "",
+        date: Long = 0L
+    ) = TransactionEntity(
+        id               = id,
+        amount           = amount,
+        category         = category,
+        date             = date,
+        type             = type,
+        note             = note,
+        receiptPath      = null,
+        recurringPeriod  = "NONE",   // non-null default
+        source           = "MANUAL", // non-null default
+        rawSms           = null,
+        smsBalance       = null,
+        smsHash          = null,
+        smsId            = null,
+        isPending        = false,
+        bankName         = null
+    )
+
     @Test
     fun insertAndGetTransactionById() = runBlocking {
-        val transaction = TransactionEntity(
-            id = 1,
-            amount = 100.0,
-            category = "Food",
-            date = System.currentTimeMillis(),
-            type = "Expense",
-            note = "Lunch",
-            bankName = null,
-            smsHash = null,
-            smsId = null,
-            source = "Manual",
-            isPending = false,
-            receiptPath = null,
-            recurringPeriod = null
-        )
+        val transaction = makeTransaction(id = 1, amount = 100.0, category = "Food", type = "EXPENSE", note = "Lunch")
 
         transactionDao.insertTransaction(transaction)
 
         val retrieved = transactionDao.getTransactionById(1)
         assertNotNull(retrieved)
         assertEquals(100.0, retrieved?.amount)
-        assertEquals("Expense", retrieved?.type)
+        assertEquals("EXPENSE", retrieved?.type)
     }
 
     @Test
     fun deleteTransaction() = runBlocking {
-        val transaction = TransactionEntity(
-            id = 1,
-            amount = 100.0,
-            category = "Food",
-            date = System.currentTimeMillis(),
-            type = "Expense",
-            note = "",
-            bankName = null,
-            smsHash = null,
-            smsId = null,
-            source = "Manual",
-            isPending = false,
-            receiptPath = null,
-            recurringPeriod = null
-        )
+        val transaction = makeTransaction(id = 1, amount = 100.0, category = "Food", type = "EXPENSE")
 
         transactionDao.insertTransaction(transaction)
         transactionDao.deleteTransaction(transaction)
@@ -91,19 +89,19 @@ class TransactionDaoTest {
 
     @Test
     fun getTransactionsByType() = runBlocking {
-        val t1 = TransactionEntity(id = 1, amount = 10.0, category = "Food", date = 0L, type = "Expense", note = "", bankName = null, smsHash = null, smsId = null, source = "Manual", isPending = false, receiptPath = null, recurringPeriod = null)
-        val t2 = TransactionEntity(id = 2, amount = 20.0, category = "Salary", date = 0L, type = "Income", note = "", bankName = null, smsHash = null, smsId = null, source = "Manual", isPending = false, receiptPath = null, recurringPeriod = null)
-        val t3 = TransactionEntity(id = 3, amount = 30.0, category = "Transport", date = 0L, type = "Expense", note = "", bankName = null, smsHash = null, smsId = null, source = "Manual", isPending = false, receiptPath = null, recurringPeriod = null)
+        val t1 = makeTransaction(id = 1, amount = 10.0,  category = "Food",      type = "EXPENSE")
+        val t2 = makeTransaction(id = 2, amount = 20.0,  category = "Salary",    type = "INCOME")
+        val t3 = makeTransaction(id = 3, amount = 30.0,  category = "Transport", type = "EXPENSE")
 
         transactionDao.insertTransaction(t1)
         transactionDao.insertTransaction(t2)
         transactionDao.insertTransaction(t3)
 
-        val expenses = transactionDao.getTransactionsByType("Expense").first()
+        val expenses = transactionDao.getTransactionsByType("EXPENSE").first()
         assertEquals(2, expenses.size)
-        
-        val incomes = transactionDao.getTransactionsByType("Income").first()
+
+        val incomes = transactionDao.getTransactionsByType("INCOME").first()
         assertEquals(1, incomes.size)
-        assertEquals(20.0, incomes[0].amount)
+        assertEquals(20.0, incomes[0].amount, 0.0)
     }
 }

@@ -63,6 +63,6 @@ class MonthlyGoalDaoTest {
 
         val allGoals = monthlyGoalDao.getAllGoals().first()
         assertEquals(1, allGoals.size)
-        assertEquals(6000.0, allGoals[0].incomeGoal)
+        assertEquals(6000.0, allGoals[0].incomeGoal, 0.0)  // delta required for Double comparison
     }
 }

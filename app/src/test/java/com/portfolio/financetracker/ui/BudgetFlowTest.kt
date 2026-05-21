@@ -8,6 +8,7 @@ import com.portfolio.financetracker.data.local.DataStoreManager
 import com.portfolio.financetracker.domain.use_case.GoalUseCases
 import com.portfolio.financetracker.ui.settings.goals.MonthlyGoalsScreen
 import com.portfolio.financetracker.ui.settings.goals.MonthlyGoalsViewModel
+import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
@@ -25,40 +26,40 @@ class BudgetFlowTest {
 
     @Test
     fun budgetConfigurationFlow() {
-        val goalUseCases = mockk<GoalUseCases>(relaxed = true)
+        val goalUseCases     = mockk<GoalUseCases>(relaxed = true)
         val dataStoreManager = mockk<DataStoreManager>(relaxed = true)
-        
+
         // Return empty flows so the ViewModel doesn't crash on init
-        io.mockk.coEvery { goalUseCases.getGoal(any()) } returns flowOf(null)
-        io.mockk.coEvery { goalUseCases.getCategoryBudgets(any()) } returns flowOf(emptyList())
-        io.mockk.coEvery { dataStoreManager.isBudgetAlertsEnabled } returns flowOf(false)
+        coEvery { goalUseCases.getGoal(any()) }           returns flowOf(null)
+        coEvery { goalUseCases.getCategoryBudgets(any()) } returns flowOf(emptyList())
+        coEvery { goalUseCases.saveGoal(any()) }           returns Unit
+        coEvery { goalUseCases.saveCategoryBudget(any()) } returns Unit
+        coEvery { dataStoreManager.isBudgetAlertsEnabled } returns flowOf(false)
 
         val viewModel = MonthlyGoalsViewModel(goalUseCases, dataStoreManager)
 
         composeTestRule.setContent {
             MonthlyGoalsScreen(
                 onNavigateBack = {},
-                viewModel = viewModel
+                viewModel      = viewModel
             )
         }
 
         // Wait for UI to settle (loadData finishes)
         composeTestRule.waitForIdle()
 
-        // Click FAB to open the form
+        // Click FAB to open the budget configuration form
         composeTestRule.onNodeWithText("Setup Budget").performClick()
-        
         composeTestRule.waitForIdle()
 
         // Enter Income Goal
         composeTestRule.onNodeWithText("Monthly Income Target (Birr)").performTextInput("8000")
-        
+
         // Enter Expense Limit
         composeTestRule.onNodeWithText("Max Spending Limit (Birr)").performTextInput("4000")
 
-        // Save Configuration
+        // Save Configuration — mocked use cases don't throw, so SaveSuccess is emitted
         composeTestRule.onNodeWithText("Save Configuration").performClick()
-
-        // Verify the Save event was emitted internally (mocked use cases don't throw, so SaveSuccess occurs)
+        composeTestRule.waitForIdle()
     }
 }

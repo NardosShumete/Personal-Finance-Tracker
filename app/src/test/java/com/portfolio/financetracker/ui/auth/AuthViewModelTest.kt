@@ -1,8 +1,11 @@
 package com.portfolio.financetracker.ui.auth
 
+import com.google.firebase.auth.FirebaseAuth
+import com.portfolio.financetracker.domain.model.AuthResult
+import com.portfolio.financetracker.domain.model.UserProfile
 import com.portfolio.financetracker.domain.use_case.auth.AuthUseCases
-import com.portfolio.financetracker.domain.use_case.auth.ValidateAuthInput
-import com.portfolio.financetracker.domain.util.ValidationResult
+import com.portfolio.financetracker.domain.use_case.auth.ValidateAuthInputUseCase
+import com.portfolio.financetracker.domain.model.ValidationResult
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -17,6 +20,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -25,28 +29,32 @@ import org.junit.Test
 class AuthViewModelTest {
 
     private lateinit var viewModel: AuthViewModel
-    private val authUseCases = mockk<AuthUseCases>(relaxed = true)
+    private val authUseCases   = mockk<AuthUseCases>(relaxed = true)
+    private val firebaseAuth   = mockk<FirebaseAuth>(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        
+
+        // currentUser flow returns null (not logged in)
         every { authUseCases.getCurrentUser() } returns flowOf(null)
-        
-        val mockValidator = mockk<ValidateAuthInput>(relaxed = true)
-        // Mock valid login
-        every { mockValidator.validateLogin(any(), any()) } returns ValidateAuthInput.ValidationData(
-            isValid = true,
-            sanitizedEmail = "test@test.com",
-            sanitizedPassword = "password",
-            emailResult = ValidationResult(isValid = true),
-            passwordResult = ValidationResult(isValid = true)
-        )
-        
+
+        // firebaseAuth.currentUser returns null (no session)
+        every { firebaseAuth.currentUser } returns null
+
+        // validateAuthInput returns a valid result for any input
+        val mockValidator = mockk<ValidateAuthInputUseCase>(relaxed = true)
+        every { mockValidator.validateLogin(any(), any()) } returns
+            ValidateAuthInputUseCase.AuthValidationResult(
+                emailResult       = ValidationResult.Success,
+                passwordResult    = ValidationResult.Success,
+                sanitizedEmail    = "test@test.com",
+                sanitizedPassword = "Password1@"
+            )
         every { authUseCases.validateAuthInput } returns mockValidator
-        
-        viewModel = AuthViewModel(authUseCases)
+
+        viewModel = AuthViewModel(authUseCases, firebaseAuth)
     }
 
     @After
@@ -64,27 +72,42 @@ class AuthViewModelTest {
     }
 
     @Test
-    fun `signIn success updates state`() = runTest(testDispatcher) {
-        coEvery { authUseCases.signIn(any(), any()) } returns Result.success(Unit)
+    fun `signIn success emits NavigateToHome event`() = runTest(testDispatcher) {
+        val profile = UserProfile(uid = "uid1", email = "test@test.com", username = "Test")
+        coEvery { authUseCases.signIn(any(), any()) } returns Result.success(profile)
 
-        viewModel.signIn("test@test.com", "password")
+        viewModel.signIn("test@test.com", "Password1@")
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
         assertFalse(state.isLoading)
-        assertTrue(state.isSuccess)
+        assertTrue(state.authResult is AuthResult.Success)
+        assertNull(state.errorMessage)
     }
 
     @Test
     fun `signIn failure updates error message`() = runTest(testDispatcher) {
-        coEvery { authUseCases.signIn(any(), any()) } returns Result.failure(Exception("Network error"))
+        coEvery { authUseCases.signIn(any(), any()) } returns
+            Result.failure(Exception("Invalid email or password. Please try again."))
 
-        viewModel.signIn("test@test.com", "password")
+        viewModel.signIn("test@test.com", "Password1@")
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
         assertFalse(state.isLoading)
-        assertFalse(state.isSuccess)
-        assertEquals("Network error", state.errorMessage)
+        assertTrue(state.authResult is AuthResult.Error)
+        assertEquals("Invalid email or password. Please try again.", state.errorMessage)
+    }
+
+    @Test
+    fun `clearError resets errorMessage`() = runTest(testDispatcher) {
+        coEvery { authUseCases.signIn(any(), any()) } returns
+            Result.failure(Exception("Some error"))
+
+        viewModel.signIn("test@test.com", "Password1@")
+        advanceUntilIdle()
+
+        viewModel.clearError()
+        assertNull(viewModel.uiState.value.errorMessage)
     }
 }

@@ -40,14 +40,14 @@ class BankAccountDaoTest {
     @Test
     fun insertAndGetAllBankAccounts() = runBlocking {
         val account = BankAccountEntity(
-            id = 1,
-            name = "Commercial Bank of Ethiopia",
-            shortName = "CBE",
-            smsSenderId = "CBE",
-            logoResId = 0,
-            accountNumber = "1000",
-            totalIncome = 500.0,
-            totalExpense = 100.0,
+            id               = 1,
+            shortName        = "CBE",
+            fullName         = "Commercial Bank of Ethiopia",
+            smsSenderId      = "CBE",
+            colorHex         = "#0055A4",
+            isConnected      = false,
+            totalIncome      = 500.0,
+            totalExpense     = 100.0,
             transactionCount = 2
         )
 
@@ -60,25 +60,45 @@ class BankAccountDaoTest {
 
     @Test
     fun getBankAccountByShortName_and_SenderId() = runBlocking {
-        val account = BankAccountEntity(id = 2, name = "Awash Bank", shortName = "Awash", smsSenderId = "AWASH_SMS", logoResId = 0, accountNumber = "", totalIncome = 0.0, totalExpense = 0.0, transactionCount = 0)
+        val account = BankAccountEntity(
+            id               = 2,
+            shortName        = "Awash",
+            fullName         = "Awash Bank",
+            smsSenderId      = "AWASH_SMS",
+            colorHex         = "#FF6600",
+            isConnected      = false,
+            totalIncome      = 0.0,
+            totalExpense     = 0.0,
+            transactionCount = 0
+        )
         bankAccountDao.insertBankAccount(account)
 
         val byShortName = bankAccountDao.getBankAccountByShortName("Awash")
         assertNotNull(byShortName)
-        assertEquals("Awash Bank", byShortName?.name)
+        assertEquals("Awash Bank", byShortName?.fullName)
 
         val bySenderId = bankAccountDao.getBankAccountBySenderId("AWASH_SMS")
         assertNotNull(bySenderId)
-        assertEquals("Awash Bank", bySenderId?.name)
+        assertEquals("Awash Bank", bySenderId?.fullName)
     }
 
     @Test
-    fun updateTotals_byShortName() = runBlocking {
-        val account = BankAccountEntity(id = 3, name = "Dashen", shortName = "Dashen", smsSenderId = "", logoResId = 0, accountNumber = "", totalIncome = 1000.0, totalExpense = 200.0, transactionCount = 5)
+    fun updateTotals_byId() = runBlocking {
+        val account = BankAccountEntity(
+            id               = 3,
+            shortName        = "Dashen",
+            fullName         = "Dashen Bank",
+            smsSenderId      = "DashenBank",
+            colorHex         = "#800000",
+            isConnected      = false,
+            totalIncome      = 1000.0,
+            totalExpense     = 200.0,
+            transactionCount = 5
+        )
         bankAccountDao.insertBankAccount(account)
 
-        // Adding 500 income, 100 expense
-        bankAccountDao.updateTotals("Dashen", 500.0, 100.0)
+        // Full recalculate via id-based updateTotals
+        bankAccountDao.updateTotals(id = 3, income = 1500.0, expense = 300.0, count = 6, lastKnownBalance = null)
 
         val updated = bankAccountDao.getBankAccountByShortName("Dashen")
         assertNotNull(updated)
