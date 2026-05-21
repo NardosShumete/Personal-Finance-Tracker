@@ -190,7 +190,7 @@ fun DashboardScreen(
                     ) {
                         Icon(Icons.Default.History, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("View All Transactions & Search")
+                        Text(stringResource(R.string.view_all_transactions))
                     }
                 }
             }
@@ -312,7 +312,7 @@ private fun AdaptiveSearchBar(query: String, onQueryChange: (String) -> Unit) {
             onValueChange = onQueryChange,
             placeholder = {
                 Text(
-                    "Search transactions...",
+                    stringResource(R.string.search_transactions_hint),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 14.sp
                 )
@@ -374,14 +374,14 @@ private fun EmptyTransactionsState() {
         }
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "No transactions yet",
+            text = stringResource(R.string.no_transactions_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "Tap + to add your first transaction",
+            text = stringResource(R.string.add_first_transaction_desc),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
