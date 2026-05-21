@@ -3,17 +3,10 @@ package com.portfolio.financetracker.di
 import android.app.Application
 import androidx.room.Room
 import com.portfolio.financetracker.data.local.FinanceDatabase
-import com.portfolio.financetracker.data.repository.TransactionRepositoryImpl
-import com.portfolio.financetracker.domain.repository.TransactionRepository
-import com.portfolio.financetracker.data.repository.ReminderRepositoryImpl
-import com.portfolio.financetracker.domain.repository.ReminderRepository
-import com.portfolio.financetracker.data.repository.BankAccountRepositoryImpl
-import com.portfolio.financetracker.domain.repository.BankAccountRepository
-import com.portfolio.financetracker.data.repository.CustomBankRepositoryImpl
-import com.portfolio.financetracker.domain.repository.CustomBankRepository
+import com.portfolio.financetracker.data.local.dao.*
+import com.portfolio.financetracker.data.repository.*
+import com.portfolio.financetracker.domain.repository.*
 import com.portfolio.financetracker.data.remote.groq.GroqApi
-import com.portfolio.financetracker.data.repository.AiRepositoryImpl
-import com.portfolio.financetracker.domain.repository.AiRepository
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -57,6 +50,24 @@ object AppModule {
     }
 
     @Provides
+    fun provideTransactionDao(db: FinanceDatabase): TransactionDao = db.transactionDao
+
+    @Provides
+    fun provideBankAccountDao(db: FinanceDatabase): BankAccountDao = db.bankAccountDao
+
+    @Provides
+    fun provideMonthlyGoalDao(db: FinanceDatabase): MonthlyGoalDao = db.monthlyGoalDao
+
+    @Provides
+    fun provideReminderDao(db: FinanceDatabase): ReminderDao = db.reminderDao
+
+    @Provides
+    fun provideCustomBankDao(db: FinanceDatabase): CustomBankDao = db.customBankDao
+    
+    @Provides
+    fun provideCategoryBudgetDao(db: FinanceDatabase): CategoryBudgetDao = db.categoryBudgetDao
+
+    @Provides
     @Singleton
     fun provideTransactionRepository(
         db: FinanceDatabase,
@@ -67,8 +78,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideGoalRepository(db: FinanceDatabase): com.portfolio.financetracker.domain.repository.GoalRepository {
-        return com.portfolio.financetracker.data.repository.GoalRepositoryImpl(db.monthlyGoalDao)
+    fun provideGoalRepository(db: FinanceDatabase): GoalRepository {
+        return GoalRepositoryImpl(db.monthlyGoalDao, db.categoryBudgetDao, db.transactionDao)
     }
 
     @Provides

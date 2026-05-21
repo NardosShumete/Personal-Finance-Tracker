@@ -5,6 +5,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.portfolio.financetracker.core.util.NotificationHelper
+import com.portfolio.financetracker.data.local.DataStoreManager
 import com.portfolio.financetracker.domain.model.TransactionType
 import com.portfolio.financetracker.domain.use_case.GoalUseCases
 import com.portfolio.financetracker.domain.use_case.TransactionUseCases
@@ -20,11 +21,16 @@ class BudgetAlertWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted workerParams: WorkerParameters,
     private val transactionUseCases: TransactionUseCases,
-    private val goalUseCases: GoalUseCases
+    private val goalUseCases: GoalUseCases,
+    private val dataStoreManager: DataStoreManager
 ) : CoroutineWorker(context, workerParams) {
 
     override suspend fun doWork(): Result {
         return try {
+            // Check if user has enabled budget alerts
+            val isEnabled = dataStoreManager.isBudgetAlertsEnabled.first()
+            if (!isEnabled) return Result.success()
+
             val currentMonthYear = SimpleDateFormat("MM-yyyy", Locale.getDefault()).format(Date())
             val goal = goalUseCases.getGoal(currentMonthYear).first() ?: return Result.success() // No goals, skip
             
