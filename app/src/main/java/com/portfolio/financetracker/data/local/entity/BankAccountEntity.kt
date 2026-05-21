@@ -18,5 +18,11 @@ data class BankAccountEntity(
     val isConnected: Boolean,
     val totalIncome: Double = 0.0,
     val totalExpense: Double = 0.0,
-    val transactionCount: Int = 0
+    val transactionCount: Int = 0,
+    /**
+     * The most recent balance reported in an SMS for this bank.
+     * This is the actual account balance as reported by the bank,
+     * NOT income minus expense. Null until the first SMS is confirmed.
+     */
+    val lastKnownBalance: Double? = null
 )

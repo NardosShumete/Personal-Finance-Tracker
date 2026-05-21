@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -28,6 +29,7 @@ import coil.compose.AsyncImage
 import com.portfolio.financetracker.R
 import com.portfolio.financetracker.domain.model.RecurringPeriod
 import com.portfolio.financetracker.domain.model.TransactionType
+import com.portfolio.financetracker.ui.transaction.toLocalizedString
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
 import java.text.SimpleDateFormat
@@ -172,7 +174,7 @@ fun AddTransactionScreen(
                 onValueChange = { viewModel.onEvent(AddTransactionEvent.EnteredAmount(it)) },
                 label = { Text(stringResource(R.string.amount)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("amount_input"),
                 prefix = { Text("Br ") }
             )
 
@@ -181,7 +183,7 @@ fun AddTransactionScreen(
                 value = state.category,
                 onValueChange = { viewModel.onEvent(AddTransactionEvent.EnteredCategory(it)) },
                 label = { Text(stringResource(R.string.category)) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().testTag("category_input")
             )
 
             val categorySuggestions = if (state.type == TransactionType.INCOME) {
@@ -322,7 +324,7 @@ fun AddTransactionScreen(
                 value = state.note,
                 onValueChange = { viewModel.onEvent(AddTransactionEvent.EnteredNote(it)) },
                 label = { Text(stringResource(R.string.note)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("note_input"),
                 minLines = 3
             )
 
@@ -332,7 +334,8 @@ fun AddTransactionScreen(
                 onClick = { viewModel.onEvent(AddTransactionEvent.SaveTransaction) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
+                    .height(56.dp)
+                    .testTag("save_button"),
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text(

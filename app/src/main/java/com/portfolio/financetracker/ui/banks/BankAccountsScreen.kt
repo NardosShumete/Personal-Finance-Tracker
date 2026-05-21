@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,15 +21,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.compose.ui.res.stringResource
 import com.portfolio.financetracker.R
 import com.portfolio.financetracker.data.local.entity.BankAccountEntity
 import com.portfolio.financetracker.ui.theme.*
-import java.util.Locale
 
 @Composable
 fun BankAccountsScreen(
@@ -38,6 +38,55 @@ fun BankAccountsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isDark = isSystemInDarkTheme()
+
+    // Track which bank is pending deletion — drives the confirmation dialog
+    var bankToDelete by remember { mutableStateOf<BankAccountEntity?>(null) }
+
+    // Confirmation dialog
+    bankToDelete?.let { bank ->
+        AlertDialog(
+            onDismissRequest = { bankToDelete = null },
+            icon = {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = {
+                Text(
+                    text = "Remove ${bank.fullName}?",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Text(
+                    text = "This will remove the bank card. Your existing transactions will not be deleted.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteBank(bank.id)
+                        bankToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { bankToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -136,8 +185,9 @@ fun BankAccountsScreen(
 
                     items(uiState.accounts, key = { it.id }) { account ->
                         BankAccountCard(
-                            account = account,
-                            onClick = { onBankClick(account.shortName) }
+                            account  = account,
+                            onClick  = { onBankClick(account.shortName) },
+                            onDelete = { bankToDelete = account }
                         )
                     }
 
@@ -187,7 +237,8 @@ private fun TotalBalanceBanner(totalBalance: Double) {
 @Composable
 private fun BankAccountCard(
     account: BankAccountEntity,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDelete: () -> Unit
 ) {
     val accentColor = runCatching {
         Color(android.graphics.Color.parseColor(account.colorHex))
@@ -217,7 +268,7 @@ private fun BankAccountCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
+                .padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Bank icon circle
@@ -260,21 +311,35 @@ private fun BankAccountCard(
                 )
             }
 
-            // Balance + arrow
-            Column(horizontalAlignment = Alignment.End) {
-                val balance = account.totalIncome - account.totalExpense
-                Text(
-                    text = stringResource(R.string.balance_format, balance),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = if (balance >= 0) EmeraldGreen else ElectricRose
-                )
-                Spacer(modifier = Modifier.height(4.dp))
+            // Balance
+            val balance = account.totalIncome - account.totalExpense
+            Text(
+                text = stringResource(R.string.balance_format, balance),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = if (balance >= 0) EmeraldGreen else ElectricRose
+            )
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            // Navigate arrow
+            Icon(
+                Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp)
+            )
+
+            // Delete button — tinted red, clearly destructive
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier.size(36.dp)
+            ) {
                 Icon(
-                    Icons.Default.ChevronRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp)
+                    imageVector        = Icons.Default.Delete,
+                    contentDescription = "Remove ${account.fullName}",
+                    tint               = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                    modifier           = Modifier.size(18.dp)
                 )
             }
         }

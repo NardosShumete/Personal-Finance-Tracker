@@ -82,7 +82,12 @@ class MainActivity : FragmentActivity() {
                     androidx.compose.ui.platform.LocalConfiguration provides config
                 ) {
                     if (showSplash) {
-                        SplashScreen(onSplashFinished = { showSplash = false })
+                        SplashScreen(
+                            onNavigateToDashboard = { showSplash = false },
+                            onNavigateToLogin = { showSplash = false },
+                            onNavigateToVerifyEmail = { showSplash = false },
+                            viewModel = authViewModel
+                        )
                         return@CompositionLocalProvider
                     }
 
@@ -147,10 +152,24 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    // Track whether the app is returning from background (not just a rotation).
+    private var wasInBackground = false
+
+    override fun onStop() {
+        super.onStop()
+        // Only mark as background when the activity is fully stopped (home button,
+        // task switcher, etc.) — not on configuration changes like rotation.
+        if (!isChangingConfigurations) {
+            wasInBackground = true
+        }
+    }
+
     override fun onResume() {
         super.onResume()
-        if (biometricViewModel.isBiometricEnabled.value) {
+        // Re-lock only when returning from background, not on every rotation.
+        if (wasInBackground && biometricViewModel.isBiometricEnabled.value) {
             biometricViewModel.setAuthenticated(false)
+            wasInBackground = false
         }
     }
 

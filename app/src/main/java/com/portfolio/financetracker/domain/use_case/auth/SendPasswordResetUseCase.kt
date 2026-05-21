@@ -1,19 +1,18 @@
 package com.portfolio.financetracker.domain.use_case.auth
 
-import android.util.Patterns
 import com.portfolio.financetracker.domain.repository.AuthRepository
+import com.portfolio.financetracker.domain.util.InputValidator
 import javax.inject.Inject
 
 class SendPasswordResetUseCase @Inject constructor(
     private val repository: AuthRepository
 ) {
     suspend operator fun invoke(email: String): Result<Unit> {
-        // Validate before hitting the network
-        if (email.isBlank())
-            return Result.failure(IllegalArgumentException("Please enter your email address."))
-        if (!Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches())
-            return Result.failure(IllegalArgumentException("Please enter a valid email address."))
-
-        return repository.sendPasswordReset(email.trim())
+        // Use domain-layer InputValidator — no Android framework dependency
+        val validation = InputValidator.validateEmail(email)
+        if (!validation.isSuccess) {
+            return Result.failure(IllegalArgumentException(validation.errorMessage))
+        }
+        return repository.sendPasswordReset(InputValidator.sanitizeEmail(email))
     }
 }

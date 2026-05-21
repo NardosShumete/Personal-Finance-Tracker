@@ -30,8 +30,16 @@ interface AuthRepository {
 
     /**
      * Sends a Firebase password-reset email to [email].
-     * Returns [Result.success] if the email was dispatched,
-     * [Result.failure] with a user-friendly message otherwise.
      */
     suspend fun sendPasswordReset(email: String): Result<Unit>
+
+    /**
+     * Resends the verification email to the currently signed-in (but unverified) user.
+     */
+    suspend fun resendVerificationEmail(): Result<Unit>
+
+    /**
+     * Reloads the Firebase user to check if they have verified their email.
+     */
+    suspend fun reloadAndCheckVerification(): Boolean
 }

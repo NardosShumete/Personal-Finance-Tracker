@@ -9,5 +9,6 @@ interface BankAccountRepository {
     suspend fun getBankAccountBySenderId(senderId: String): BankAccountEntity?
     suspend fun insertBankAccount(bankAccount: BankAccountEntity)
     suspend fun updateBankAccount(bankAccount: BankAccountEntity)
-    suspend fun updateTotals(id: Int, income: Double, expense: Double, count: Int)
+    suspend fun updateTotals(id: Int, income: Double, expense: Double, count: Int, lastKnownBalance: Double?)
+    suspend fun deleteBankAccount(id: Int)
 }

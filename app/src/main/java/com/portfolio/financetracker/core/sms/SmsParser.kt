@@ -125,22 +125,25 @@ object SmsParser {
     fun detectBankFormat(body: String): BankFormat {
         val b = body.lowercase()
         return when {
-            // CBE: "credited with ETB" / "debited with ETB" / "available balance"
+            // ── CBE (Commercial Bank of Ethiopia) ────────────────────────────
+            // Primary: "credited/debited with ETB" + any form of "available balance"
+            // Fallback: just "credited/debited with ETB" + "your account" (CBE-specific phrasing)
             (b.contains("credited with etb") || b.contains("debited with etb")) &&
-            b.contains("available balance") -> BankFormat.CBE
+            (b.contains("available balance") || b.contains("your account")) -> BankFormat.CBE
 
-            // Dashen: "debit of etb" / "credit of etb" + "balance:"
+            // ── Dashen Bank ───────────────────────────────────────────────────
             (b.contains("debit of etb") || b.contains("credit of etb")) -> BankFormat.DASHEN
 
-            // Telebirr: "you have received/sent/paid etb" + "new balance"
+            // ── Telebirr (Ethio Telecom) ──────────────────────────────────────
             (b.contains("you have received etb") || b.contains("you have sent etb") ||
              b.contains("you have paid etb")) -> BankFormat.TELEBIRR
 
-            // Awash: "awash bank" + "credited/debited etb"
+            // ── Awash Bank ────────────────────────────────────────────────────
             b.contains("awash") && (b.contains("credited etb") || b.contains("debited etb")) ->
                 BankFormat.AWASH
 
-            // Abyssinia/BOA: "dr etb" / "cr etb" + "avail bal"
+            // ── Bank of Abyssinia (BOA) ───────────────────────────────────────
+            // "Dr ETB" / "Cr ETB" + "Avail Bal" — BOA's compact accounting format
             (b.contains(" dr etb") || b.contains(" cr etb")) && b.contains("avail bal") ->
                 BankFormat.ABYSSINIA
 
@@ -171,7 +174,9 @@ object SmsParser {
         BankFormat.DASHEN    -> "Dashen"
         BankFormat.TELEBIRR  -> "Telebirr"
         BankFormat.AWASH     -> "Awash"
-        BankFormat.ABYSSINIA -> "Abyssinia"
+        // BOA = Bank of Abyssinia. The seeded BankAccountEntity uses shortName "BOA",
+        // so the bankName stored on transactions MUST be "BOA" to match correctly.
+        BankFormat.ABYSSINIA -> "BOA"
         BankFormat.UNKNOWN   -> "Bank"
     }
 

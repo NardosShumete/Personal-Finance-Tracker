@@ -136,3 +136,49 @@ val MIGRATION_12_13 = object : Migration(12, 13) {
         // No schema changes, just forcing a version bump to refresh Room's identity hash
     }
 }
+
+/**
+ * Migration 13 → 14:
+ * 1. Adds lastKnownBalance column to bank_account_table (the actual balance
+ *    reported by the bank in the SMS, not income-minus-expense).
+ * 2. Removes case-duplicate bank rows (e.g. "telebirr" vs "Telebirr") by
+ *    keeping only the row with the highest id (most recently inserted).
+ */
+val MIGRATION_13_14 = object : Migration(13, 14) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Add the new column — nullable so existing rows default to NULL
+        db.execSQL(
+            "ALTER TABLE `bank_account_table` ADD COLUMN `lastKnownBalance` REAL"
+        )
+
+        // Remove case-insensitive duplicates: for each group of rows that share
+        // the same shortName (case-insensitive), keep only the one with the
+        // highest id and delete the rest.
+        db.execSQL(
+            """
+            DELETE FROM bank_account_table
+            WHERE id NOT IN (
+                SELECT MAX(id)
+                FROM bank_account_table
+                GROUP BY LOWER(shortName)
+            )
+            """.trimIndent()
+        )
+
+        // Normalise remaining shortNames to their canonical casing
+        // (update any lowercase "telebirr" → "Telebirr", etc.)
+        val canonicalNames = mapOf(
+            "cbe"      to "CBE",
+            "boa"      to "BOA",
+            "telebirr" to "Telebirr",
+            "hibret"   to "Hibret",
+            "dashen"   to "Dashen",
+            "awash"    to "Awash"
+        )
+        canonicalNames.forEach { (lower, canonical) ->
+            db.execSQL(
+                "UPDATE bank_account_table SET shortName = '$canonical' WHERE LOWER(shortName) = '$lower'"
+            )
+        }
+    }
+}

@@ -4,6 +4,7 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -39,7 +40,7 @@ import androidx.compose.ui.Modifier
 @Composable
 fun FinanceNavGraph(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = Screen.DashboardScreen.route,
+    startDestination: String = Screen.SplashScreen.route,
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val drawerState  = rememberDrawerState(DrawerValue.Closed)
@@ -49,7 +50,12 @@ fun FinanceNavGraph(
     val userProfile  by authViewModel.currentUser.collectAsState()
 
     // Screens that should NOT show the drawer (auth flow)
-    val drawerEnabled = currentRoute != Screen.LoginScreen.route
+    val noDrawerScreens = listOf(
+        Screen.LoginScreen.route,
+        Screen.SplashScreen.route,
+        Screen.VerifyEmailScreen.route
+    )
+    val drawerEnabled = currentRoute !in noDrawerScreens
 
     ModalNavigationDrawer(
         drawerState   = drawerState,
@@ -79,12 +85,68 @@ fun FinanceNavGraph(
             navController    = navController,
             startDestination = startDestination
         ) {
+            // ── Splash ────────────────────────────────────────────────────────
+            composable(route = Screen.SplashScreen.route) {
+                com.portfolio.financetracker.ui.splash.SplashScreen(
+                    onNavigateToDashboard = {
+                        navController.navigate(Screen.DashboardScreen.route) {
+                            popUpTo(Screen.SplashScreen.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToLogin = {
+                        navController.navigate(Screen.LoginScreen.route) {
+                            popUpTo(Screen.SplashScreen.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToVerifyEmail = {
+                        navController.navigate(Screen.VerifyEmailScreen.route) {
+                            popUpTo(Screen.SplashScreen.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             // ── Login / Register ──────────────────────────────────────────────
             composable(route = Screen.LoginScreen.route) {
+                // Navigation is driven entirely by the ViewModel's eventFlow.
+                // The onAuthSuccess callback in LoginScreen is kept as a no-op
+                // to avoid double-navigation.
+                LaunchedEffect(Unit) {
+                    authViewModel.eventFlow.collect { event ->
+                        when (event) {
+                            is AuthViewModel.UiEvent.NavigateToHome -> {
+                                navController.navigate(Screen.DashboardScreen.route) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            }
+                            is AuthViewModel.UiEvent.NavigateToVerifyEmail -> {
+                                navController.navigate(Screen.VerifyEmailScreen.route) {
+                                    popUpTo(Screen.LoginScreen.route) { inclusive = false }
+                                }
+                            }
+                            else -> {}
+                        }
+                    }
+                }
+
                 LoginScreen(
-                    onAuthSuccess = {
+                    // onAuthSuccess is intentionally a no-op here; navigation is
+                    // handled above via eventFlow to avoid duplicate back-stack entries.
+                    onAuthSuccess = {}
+                )
+            }
+
+            // ── Verify Email ──────────────────────────────────────────────────
+            composable(route = Screen.VerifyEmailScreen.route) {
+                com.portfolio.financetracker.ui.auth.VerifyEmailScreen(
+                    onVerified = {
                         navController.navigate(Screen.DashboardScreen.route) {
-                            popUpTo(Screen.LoginScreen.route) { inclusive = true }
+                            popUpTo(Screen.VerifyEmailScreen.route) { inclusive = true }
+                        }
+                    },
+                    onLogout = {
+                        navController.navigate(Screen.LoginScreen.route) {
+                            popUpTo(0) { inclusive = true }
                         }
                     }
                 )

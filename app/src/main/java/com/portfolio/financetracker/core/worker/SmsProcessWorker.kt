@@ -39,10 +39,23 @@ class SmsProcessWorker @AssistedInject constructor(
         val body       = inputData.getString(KEY_BODY)       ?: return Result.failure()
         val receivedAt = inputData.getLong(KEY_RECEIVED_AT, 0L)
 
-        // Only process if the bank is connected
+        // Gate: only process if SMS tracking is enabled at all.
+        // We do NOT gate on smsSenderId matching here — that was the old approach
+        // and caused CBE/Dashen/Awash to be silently dropped when the sender address
+        // didn't exactly match the seeded smsSenderId string.
+        //
+        // The correct gate is body-based detection (detectBankFormat) which already
+        // happens inside ProcessSmsUseCase → SmsParser.parse(). If the body doesn't
+        // match any known bank format, the use case returns false and nothing is saved.
+        //
+        // The user's tracked-senders list (DataStore) is the real allowlist — it is
+        // checked inside ProcessSmsUseCase. We only need to verify SMS tracking is on.
         val accounts = bankAccountDao.getAllBankAccounts().first()
-        val isConnected = accounts.any { it.smsSenderId.equals(sender, ignoreCase = true) && it.isConnected }
-        if (!isConnected) return Result.success()
+        val smsTrackingEnabled = accounts.any { it.isConnected }
+        if (!smsTrackingEnabled) {
+            Log.d(TAG, "No banks connected — skipping SMS from $sender")
+            return Result.success()
+        }
 
         return try {
             processSmsUseCase(sender, body, receivedAt)

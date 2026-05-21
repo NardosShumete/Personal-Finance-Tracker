@@ -1,5 +1,6 @@
 package com.portfolio.financetracker.domain.model
 
+import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 
 /**
@@ -11,6 +12,7 @@ import kotlinx.serialization.Serializable
  * Stored as a String in Room so future sources (e.g. CSV_IMPORT, API)
  * can be added without a schema migration.
  */
+@OptIn(InternalSerializationApi::class)
 @Serializable
 enum class TransactionSource {
     MANUAL,

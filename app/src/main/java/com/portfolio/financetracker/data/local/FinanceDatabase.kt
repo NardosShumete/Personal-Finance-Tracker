@@ -14,8 +14,8 @@ import com.portfolio.financetracker.data.local.entity.*
         ReminderEntity::class,
         CategoryBudgetEntity::class
     ],
-    version = 13,
-    exportSchema = false
+    version = 14,
+    exportSchema = true
 )
 abstract class FinanceDatabase : RoomDatabase() {
     abstract val transactionDao: TransactionDao

@@ -6,8 +6,8 @@ import com.portfolio.financetracker.R
 import com.portfolio.financetracker.domain.model.RecurringPeriod
 
 /**
- * Provides localized strings for RecurringPeriod.
- * Separated from the domain model to avoid compilation issues with Kotlin Serialization.
+ * Extension function to provide localized strings for RecurringPeriod.
+ * Separated from the domain model to resolve conflicts between Serialization and Compose compilers.
  */
 @Composable
 fun RecurringPeriod.toLocalizedString(): String {

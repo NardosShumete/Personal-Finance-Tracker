@@ -20,17 +20,29 @@ fun VerifyEmailScreen(
     onLogout: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-    
-    // Periodically check if email is verified
+    val uiState           by viewModel.uiState.collectAsState()
+    val snackbarHostState  = remember { SnackbarHostState() }
+
+    // Collect one-shot events (snackbar messages) from the ViewModel
+    LaunchedEffect(Unit) {
+        viewModel.eventFlow.collect { event ->
+            if (event is AuthViewModel.UiEvent.ShowSnackbar) {
+                snackbarHostState.showSnackbar(
+                    message  = event.message,
+                    duration = SnackbarDuration.Short
+                )
+            }
+        }
+    }
+
+    // Poll Firebase every 3 seconds to detect when the user clicks the link
     LaunchedEffect(Unit) {
         while (true) {
+            delay(3_000)
             if (viewModel.checkEmailVerification()) {
                 onVerified()
                 break
             }
-            delay(3000) // Check every 3 seconds
         }
     }
 
@@ -46,47 +58,52 @@ fun VerifyEmailScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
-                imageVector = Icons.Default.Email,
+                imageVector        = Icons.Default.Email,
                 contentDescription = null,
-                modifier = Modifier.size(100.dp),
-                tint = MaterialTheme.colorScheme.primary
+                modifier           = Modifier.size(100.dp),
+                tint               = MaterialTheme.colorScheme.primary
             )
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             Text(
-                text = "Verify your email",
-                style = MaterialTheme.typography.headlineMedium,
+                text       = "Verify your email",
+                style      = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Text(
-                text = "We've sent a verification link to your email address. Please click the link to verify your account.",
-                style = MaterialTheme.typography.bodyLarge,
+                text      = "We've sent a verification link to your email address. " +
+                            "Please click the link to verify your account.",
+                style     = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color     = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             Button(
-                onClick = { 
-                    viewModel.resendVerificationEmail { message ->
-                        // Show snackbar via viewModel event or local state
-                    }
-                },
+                onClick  = { viewModel.resendVerificationEmail() },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading
+                enabled  = !uiState.isLoading
             ) {
-                Icon(Icons.Default.Refresh, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Resend Verification Email")
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier    = Modifier.size(18.dp),
+                        color       = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Icon(Icons.Default.Refresh, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Resend Verification Email")
+                }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             TextButton(
                 onClick = {
                     viewModel.signOut()

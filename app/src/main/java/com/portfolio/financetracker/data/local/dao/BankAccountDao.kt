@@ -28,6 +28,9 @@ interface BankAccountDao {
     @Update
     suspend fun updateBankAccount(bankAccount: BankAccountEntity)
 
-    @Query("UPDATE bank_account_table SET totalIncome = :income, totalExpense = :expense, transactionCount = :count WHERE id = :id")
-    suspend fun updateTotals(id: Int, income: Double, expense: Double, count: Int)
+    @Query("UPDATE bank_account_table SET totalIncome = :income, totalExpense = :expense, transactionCount = :count, lastKnownBalance = :lastKnownBalance WHERE id = :id")
+    suspend fun updateTotals(id: Int, income: Double, expense: Double, count: Int, lastKnownBalance: Double?)
+
+    @Query("DELETE FROM bank_account_table WHERE id = :id")
+    suspend fun deleteBankAccount(id: Int)
 }
