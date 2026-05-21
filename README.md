@@ -65,7 +65,14 @@ This project serves as a showcase of modern Android development patterns, includ
 - Custom bank configurations stored in `custom_bank_table`
 - Bank account cards on dashboard with last-known balance
 
-### 📅 Calendar & Reminders
+### � Budget Planner & Per-Category Alerts *(Added: May 19–21, 2026)*
+- **Per-category budget limits** — set individual spending caps for Food, Transport, Shopping, Housing, Utilities, and more via `CategoryBudget` model and `category_budget_table`
+- **Smart budget alerts** — `BudgetAlertWorker` fires at **80%**, **90%**, and **100%+** of each category's limit, not just the overall monthly limit
+- **Enhanced Monthly Goals screen** — redesigned UI with category-level budget cards, progress bars per category, and visual color coding (green → amber → red)
+- **Real-time budget tracking** — `MonthlyGoalsViewModel` combines overall goal + per-category budgets into a single reactive state
+- **Persistent category budgets** — stored in Room `category_budget_table`, survives app restarts
+
+### �📅 Calendar & Reminders
 - Create financial reminders: deposits, withdrawals, rent, utilities, subscriptions
 - Recurring reminders (WEEKLY / MONTHLY)
 - Auto-generate transactions from reminders when due
@@ -98,6 +105,7 @@ This project serves as a showcase of modern Android development patterns, includ
 - **Currencies** — ETB, USD, EUR, GBP, JPY, CAD, AUD
 - **Theme** — Dark / Light / System default
 - **Biometric** — enable/disable per-session lock
+- **Fully externalized strings** — all UI text moved to `strings.xml` / `strings-am.xml` for complete localization coverage *(May 21, 2026)*
 
 ### 📤 Data Export
 - Export all transactions to CSV file via system file picker
@@ -323,11 +331,3 @@ app/
 
 ---
 
-## 📄 License
-
-This project is open-source and available under the [MIT License](LICENSE).
-
----
-
-*Built as a professional portfolio piece demonstrating modern Android development.*
-*Developed by Group 2*
