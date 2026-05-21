@@ -322,11 +322,11 @@ app/
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="screenshots/dashboard.png" width="45%" alt="Dashboard" />
-  <img src="screenshots/add_transaction.png" width="45%" alt="Add Transaction" />
-  <img src="screenshots/Analytics.png" width="45%" alt="Analytics" />
-  <img src="screenshots/Profile.png" width="45%" alt="Profile" />
-  <img src="screenshots/Setting.png" width="45%" alt="Settings" />
+  <img src="screenshots/dashboard.jpg" width="45%" alt="Dashboard" />
+  <img src="screenshots/add_transaction.jpg" width="45%" alt="Add Transaction" />
+  <img src="screenshots/Analytics.jpg" width="45%" alt="Analytics" />
+  <img src="screenshots/Profile.jpg" width="45%" alt="Profile" />
+  <img src="screenshots/Setting.jpg" width="45%" alt="Settings" />
 </p>
 
 ---
