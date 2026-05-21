@@ -346,7 +346,7 @@ fun CategoryServiceCard(
             Spacer(modifier = Modifier.height(20.dp))
 
             LinearProgressIndicator(
-                progress = { animateFloatAsState(targetValue = progress, label = "progress").value },
+                progress = { progress },
                 modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
                 color = statusColor,
                 trackColor = statusColor.copy(alpha = 0.1f)

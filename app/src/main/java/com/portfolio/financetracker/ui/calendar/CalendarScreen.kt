@@ -21,6 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.portfolio.financetracker.data.local.entity.ReminderEntity
 import java.text.SimpleDateFormat
 import java.util.*
+import com.portfolio.financetracker.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

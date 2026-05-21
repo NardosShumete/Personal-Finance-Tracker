@@ -1,10 +1,22 @@
 package com.portfolio.financetracker.domain.model
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.portfolio.financetracker.R
 import kotlinx.serialization.Serializable
 
 @Serializable
 enum class RecurringPeriod {
-    NONE, WEEKLY, MONTHLY
+    NONE, WEEKLY, MONTHLY;
+
+    @Composable
+    fun toLocalizedString(): String {
+        return when (this) {
+            NONE -> stringResource(R.string.recurring_period_once)
+            WEEKLY -> stringResource(R.string.recurring_period_weekly)
+            MONTHLY -> stringResource(R.string.recurring_period_monthly)
+        }
+    }
 }
 
 @Serializable

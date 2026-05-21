@@ -127,3 +127,12 @@ val MIGRATION_11_12 = object : Migration(11, 12) {
         // No schema changes, just forcing a version bump to refresh Room's identity hash
     }
 }
+
+/**
+ * Migration 12 → 13: Force refresh identity hash
+ */
+val MIGRATION_12_13 = object : Migration(12, 13) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // No schema changes, just forcing a version bump to refresh Room's identity hash
+    }
+}

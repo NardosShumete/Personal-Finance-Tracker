@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.portfolio.financetracker.R
 
 @Composable
 fun LoginScreen(
@@ -450,6 +451,7 @@ private fun ForgotPasswordDialog(
 ) {
     var resetEmail by remember { mutableStateOf(prefillEmail) }
     var emailError by remember { mutableStateOf<String?>(null) }
+    val emailRequiredError = stringResource(R.string.please_enter_your_email)
 
     AlertDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
@@ -490,7 +492,7 @@ private fun ForgotPasswordDialog(
                     keyboardActions = KeyboardActions(
                         onDone = {
                             if (resetEmail.isNotBlank()) onSend(resetEmail)
-                            else emailError = "Please enter your email."
+                            else emailError = emailRequiredError
                         }
                     )
                 )
@@ -499,7 +501,7 @@ private fun ForgotPasswordDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    if (resetEmail.isBlank()) emailError = stringResource(R.string.please_enter_your_email)
+                    if (resetEmail.isBlank()) emailError = emailRequiredError
                     else onSend(resetEmail)
                 },
                 enabled = !isLoading

@@ -38,16 +38,13 @@ object AppModule {
             com.portfolio.financetracker.data.local.MIGRATION_8_9,
             com.portfolio.financetracker.data.local.MIGRATION_9_10,
             com.portfolio.financetracker.data.local.MIGRATION_10_11,
-            com.portfolio.financetracker.data.local.MIGRATION_11_12
+            com.portfolio.financetracker.data.local.MIGRATION_11_12,
+            com.portfolio.financetracker.data.local.MIGRATION_12_13
         )
         .fallbackToDestructiveMigration()
         .build()
     }
 
-    @Provides
-    fun provideBankAccountDao(db: FinanceDatabase): com.portfolio.financetracker.data.local.dao.BankAccountDao {
-        return db.bankAccountDao
-    }
 
     @Provides
     fun provideTransactionDao(db: FinanceDatabase): TransactionDao = db.transactionDao

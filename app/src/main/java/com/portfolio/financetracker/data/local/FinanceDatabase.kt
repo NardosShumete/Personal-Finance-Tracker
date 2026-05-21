@@ -14,7 +14,7 @@ import com.portfolio.financetracker.data.local.entity.*
         ReminderEntity::class,
         CategoryBudgetEntity::class
     ],
-    version = 12,
+    version = 13,
     exportSchema = false
 )
 abstract class FinanceDatabase : RoomDatabase() {
