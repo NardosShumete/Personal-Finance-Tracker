@@ -34,7 +34,9 @@ object UseCaseModule {
             getPagedTransactions = GetPagedTransactionsUseCase(repository),
             getTransaction       = GetTransactionUseCase(repository),
             deleteTransaction    = DeleteTransactionUseCase(repository),
-            addTransaction       = AddTransactionUseCase(repository)
+            deleteAllTransactions = DeleteAllTransactionsUseCase(repository),
+            addTransaction       = AddTransactionUseCase(repository),
+            getPendingCount      = GetPendingCountUseCase(repository)
         )
     }
 

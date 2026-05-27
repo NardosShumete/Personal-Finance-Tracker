@@ -50,5 +50,13 @@ data class Transaction(
      * Stored directly so we never have to guess it from the category string.
      * Null for MANUAL entries.
      */
-    val bankName: String? = null
+    val bankName: String? = null,
+
+    // ── Hybrid Template-Based Engine fields ───────────────────────────────────
+    val sender: String? = null,
+    val accountId: Int? = null,
+    val currency: String = "ETB",
+    val merchant: String? = null,
+    val confidenceScore: Double = 0.0,
+    val parsingStatus: String = "PENDING"
 )

@@ -1,9 +1,10 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
-    // id("com.google.gms.google-services") // Temporarily disabled to fix missing google-services.json error
     alias(libs.plugins.kotlinSerialization)
     id("com.google.gms.google-services")
     id("jacoco")
@@ -18,12 +19,12 @@ android {
         buildConfig = true
     }
 
-    /**
-     * Groq API Key configuration.
-     * Contributors: Add your API key to your local.properties file:
-     * GROQ_API_KEY=your_api_key_here
-     */
-    val groqApiKey = project.findProperty("GROQ_API_KEY") as String? ?: ""
+    val localProperties = Properties()
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localProperties.load(localPropertiesFile.inputStream())
+    }
+    val groqApiKey = localProperties.getProperty("GROQ_API_KEY") ?: (project.findProperty("GROQ_API_KEY") as String? ?: "")
 
     defaultConfig {
         applicationId = "com.portfolio.financetracker"
@@ -122,9 +123,11 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.kotlinx.serialization.json)
 
+    debugImplementation(platform(libs.androidx.compose.bom))
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
+    testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.robolectric)
@@ -135,6 +138,7 @@ dependencies {
     testImplementation(libs.androidx.test.ext.junit)
     testImplementation(libs.androidx.espresso.core)
 
+    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

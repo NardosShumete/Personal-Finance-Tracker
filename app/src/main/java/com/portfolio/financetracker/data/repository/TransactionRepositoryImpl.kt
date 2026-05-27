@@ -133,7 +133,10 @@ class TransactionRepositoryImpl(
             for (raw in batch) {
                 processedCount++
                 if (raw.smsId.isNotBlank() && dao.countBySmsId(raw.smsId) > 0) continue
-                val parsed = SmsParser.parse(raw.sender, raw.body, raw.timestampMs, trackedSenders) ?: continue
+                val parseResult = SmsParser.parse(raw.sender, raw.body, raw.timestampMs, trackedSenders)
+                if (parseResult !is com.portfolio.financetracker.core.sms.ParseResult.Success) continue
+                
+                val parsed = parseResult.parsed
                 if (dao.countBySmsHash(parsed.hash) > 0) continue
 
                 val transaction = Transaction(
@@ -147,8 +150,13 @@ class TransactionRepositoryImpl(
                     smsBalance = parsed.balance,
                     smsHash    = parsed.hash,
                     smsId      = raw.smsId,
-                    isPending  = true,
-                    bankName   = parsed.bankName.ifBlank { null }
+                    isPending  = parsed.parsingStatus != "AUTO_VERIFIED",
+                    bankName   = parsed.bankName.ifBlank { null },
+                    sender     = parsed.sender,
+                    currency   = parsed.currency,
+                    merchant   = parsed.merchant,
+                    confidenceScore = parsed.confidenceScore,
+                    parsingStatus = parsed.parsingStatus
                 )
                 dao.insertTransaction(transaction.toEntityModel())
                 insertedCount++
@@ -164,4 +172,8 @@ class TransactionRepositoryImpl(
         dao.getTransactionsByBank(bankName)
             .map { entities -> entities.map { it.toDomainModel() } }
             .flowOn(Dispatchers.IO)
+
+    override suspend fun deleteAllTransactions() {
+        dao.deleteAllTransactions()
+    }
 }

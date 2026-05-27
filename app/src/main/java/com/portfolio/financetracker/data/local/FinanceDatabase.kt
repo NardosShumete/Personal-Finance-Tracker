@@ -12,9 +12,10 @@ import com.portfolio.financetracker.data.local.entity.*
         CustomBankEntity::class,
         BankAccountEntity::class,
         ReminderEntity::class,
-        CategoryBudgetEntity::class
+        CategoryBudgetEntity::class,
+        FailedParseEntity::class
     ],
-    version = 14,
+    version = 15,
     exportSchema = true
 )
 abstract class FinanceDatabase : RoomDatabase() {
@@ -24,6 +25,7 @@ abstract class FinanceDatabase : RoomDatabase() {
     abstract val bankAccountDao: BankAccountDao
     abstract val reminderDao: ReminderDao
     abstract val categoryBudgetDao: CategoryBudgetDao
+    abstract val failedParseDao: FailedParseDao
 
     companion object {
         const val DATABASE_NAME = "finance_db"

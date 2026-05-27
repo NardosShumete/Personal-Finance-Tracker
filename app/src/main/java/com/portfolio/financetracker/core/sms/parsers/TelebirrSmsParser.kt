@@ -24,21 +24,26 @@ object TelebirrSmsParser : BankSmsParser {
     override val bankName = "Telebirr"
     override val format   = SmsParser.BankFormat.TELEBIRR
 
-    private val AMOUNT_RE  = Regex("""(?:received|sent|paid)\s+ETB\s+([\d,]+\.?\d*)""", RegexOption.IGNORE_CASE)
-    private val BALANCE_RE = Regex("""new\s+balance\s+is\s+ETB\s+([\d,]+\.?\d*)""", RegexOption.IGNORE_CASE)
-    private val TYPE_RE    = Regex("""You\s+have\s+(received|sent|paid)""", RegexOption.IGNORE_CASE)
+    override fun isSenderMatch(sender: String): Boolean {
+        val s = sender.lowercase()
+        return s.contains("telebirr") || s == "127"
+    }
+
+    private val BALANCE_RE = Regex("""new\s+balance\s+is\s+ETB\s+([\d,]+(?:\.\d+)?)""", RegexOption.IGNORE_CASE)
 
     override fun parse(body: String, sender: String, receivedAt: Long): ParseResult {
         return try {
-            val rawAmount = AMOUNT_RE.find(body)?.groupValues?.get(1)
-                ?: return ParseResult.Failure("Telebirr: amount not found", body, format)
-
-            val typeStr = TYPE_RE.find(body)?.groupValues?.get(1)?.lowercase()
+            val typeResult = com.portfolio.financetracker.core.sms.TemplateExtractor.extractType(body)
                 ?: return ParseResult.Failure("Telebirr: transaction type not found", body, format)
+            
+            val type = typeResult.first
+            val keyword = typeResult.second
 
-            val type     = if (typeStr == "received") TransactionType.INCOME else TransactionType.EXPENSE
+            val rawAmount = com.portfolio.financetracker.core.sms.TemplateExtractor.extractAmount(body, keyword)
+                ?: return ParseResult.Failure("Telebirr: amount not found or unsafe", body, format)
+
             val balance  = BALANCE_RE.find(body)?.groupValues?.get(1)
-            val category = if (typeStr == "paid") "Shopping" else "$bankName Transfer"
+            val category = if (keyword.equals("paid", ignoreCase = true)) "Shopping" else "$bankName Transfer"
 
             buildParsedSms(rawAmount, type, balance, category, body, sender, receivedAt, bankName)
         } catch (e: Exception) {

@@ -12,17 +12,24 @@ object AbyssiniaSmsParser : BankSmsParser {
     override val bankName = "BOA"
     override val format   = SmsParser.BankFormat.ABYSSINIA
 
-    private val AMOUNT_RE  = Regex("""\b(?:Dr|Cr)\s+ETB\s+([\d,]+\.?\d*)""", RegexOption.IGNORE_CASE)
-    private val BALANCE_RE = Regex("""Avail\s+Bal\s+ETB\s+([\d,]+\.?\d*)""", RegexOption.IGNORE_CASE)
-    private val TYPE_RE    = Regex("""\b(Dr|Cr)\s+ETB""", RegexOption.IGNORE_CASE)
+    override fun isSenderMatch(sender: String): Boolean {
+        val s = sender.lowercase()
+        return s.contains("boa") || s.contains("abyssinia") || s.contains("apollo")
+    }
+
+    private val BALANCE_RE = Regex("""Avail\s+Bal\s+ETB\s+([\d,]+(?:\.\d+)?)""", RegexOption.IGNORE_CASE)
 
     override fun parse(body: String, sender: String, receivedAt: Long): ParseResult {
         return try {
-            val rawAmount = AMOUNT_RE.find(body)?.groupValues?.get(1)
-                ?: return ParseResult.Failure("Abyssinia: amount not found", body, format)
-            val typeStr = TYPE_RE.find(body)?.groupValues?.get(1)?.lowercase()
+            val typeResult = com.portfolio.financetracker.core.sms.TemplateExtractor.extractType(body)
                 ?: return ParseResult.Failure("Abyssinia: type not found", body, format)
-            val type    = if (typeStr == "cr") TransactionType.INCOME else TransactionType.EXPENSE
+            
+            val type = typeResult.first
+            val keyword = typeResult.second
+
+            val rawAmount = com.portfolio.financetracker.core.sms.TemplateExtractor.extractAmount(body, keyword)
+                ?: return ParseResult.Failure("Abyssinia: amount not found or unsafe", body, format)
+
             val balance = BALANCE_RE.find(body)?.groupValues?.get(1)
             buildParsedSms(rawAmount, type, balance, "$bankName Transfer", body, sender, receivedAt, bankName)
         } catch (e: Exception) {

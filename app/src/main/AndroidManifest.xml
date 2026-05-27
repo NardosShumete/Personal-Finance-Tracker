@@ -36,10 +36,13 @@
                 tools:node="remove" />
         </provider>
 
-        <!-- SMS BroadcastReceiver — wakes only for SMS_RECEIVED -->
+        <!-- SMS BroadcastReceiver — wakes only for SMS_RECEIVED.
+             android:exported="false" + BROADCAST_SMS permission: only the
+             telephony stack can trigger this receiver. -->
         <receiver
-            android:name=".core.sms.SmsReceiver"
-            android:exported="true">
+            android:name=".core.sms.SmsBroadcastReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
             <intent-filter android:priority="999">
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>

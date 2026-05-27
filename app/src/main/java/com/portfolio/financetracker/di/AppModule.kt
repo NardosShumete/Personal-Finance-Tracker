@@ -7,10 +7,11 @@ import com.portfolio.financetracker.data.local.dao.*
 import com.portfolio.financetracker.data.repository.*
 import com.portfolio.financetracker.domain.repository.*
 import com.portfolio.financetracker.data.remote.groq.GroqApi
-import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import dagger.Module
@@ -40,8 +41,10 @@ object AppModule {
             com.portfolio.financetracker.data.local.MIGRATION_10_11,
             com.portfolio.financetracker.data.local.MIGRATION_11_12,
             com.portfolio.financetracker.data.local.MIGRATION_12_13,
-            com.portfolio.financetracker.data.local.MIGRATION_13_14
+            com.portfolio.financetracker.data.local.MIGRATION_13_14,
+            com.portfolio.financetracker.data.local.MIGRATION_14_15
         )
+        .fallbackToDestructiveMigration()
         .build()
     }
 
@@ -63,6 +66,9 @@ object AppModule {
     
     @Provides
     fun provideCategoryBudgetDao(db: FinanceDatabase): CategoryBudgetDao = db.categoryBudgetDao
+
+    @Provides
+    fun provideFailedParseDao(db: FinanceDatabase): FailedParseDao = db.failedParseDao
 
     @Provides
     @Singleton
@@ -109,13 +115,24 @@ object AppModule {
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
+        
         val client = OkHttpClient.Builder()
             .addInterceptor(logging)
+            .addInterceptor { chain ->
+                val request = chain.request().newBuilder()
+                    .header("User-Agent", "FinanceTrackerApp/1.0")
+                    .header("Accept", "application/json")
+                    .build()
+                chain.proceed(request)
+            }
+            .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
             .build()
 
         val json = Json { 
             ignoreUnknownKeys = true
-            encodeDefaults = true 
+            // Disabling encodeDefaults prevents sending explicit nulls for optional fields,
+            // which can cause HTTP 426 or 400 errors with some API versions.
+            encodeDefaults = false
         }
         val contentType = "application/json".toMediaType()
 

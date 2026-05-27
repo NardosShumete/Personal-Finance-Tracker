@@ -46,6 +46,11 @@ interface BankSmsParser {
     /** The [SmsParser.BankFormat] this parser handles. */
     val format: SmsParser.BankFormat
 
+    /** Checks if the given sender string matches this bank's known sender IDs. */
+    fun isSenderMatch(sender: String): Boolean {
+        return sender.equals(bankName, ignoreCase = true) || sender.contains(bankName, ignoreCase = true)
+    }
+
     /**
      * Attempts to parse [body] as a transaction from this bank.
      *
@@ -60,33 +65,30 @@ interface BankSmsParser {
 
 /**
  * Returns the correct [BankSmsParser] for a given [SmsParser.BankFormat].
- * Registered parsers are singletons — no state, safe to share.
+ *
+ * Delegates to [SmsParserRegistry] — this class is kept for backward
+ * compatibility with call sites that already use BankSmsParserFactory.
+ * New code should prefer [SmsParserRegistry] directly.
  */
 object BankSmsParserFactory {
 
-    private val parsers: Map<SmsParser.BankFormat, BankSmsParser> = mapOf(
-        SmsParser.BankFormat.CBE       to CbeSmsParser,
-        SmsParser.BankFormat.DASHEN    to DashenSmsParser,
-        SmsParser.BankFormat.TELEBIRR  to TelebirrSmsParser,
-        SmsParser.BankFormat.AWASH     to AwashSmsParser,
-        SmsParser.BankFormat.ABYSSINIA to AbyssiniaSmsParser
-    )
+    fun get(format: SmsParser.BankFormat): BankSmsParser? =
+        SmsParserRegistry.getBuiltIn(format)
 
-    private val dynamicParsers = mutableMapOf<String, BankSmsParser>()
+    fun getDynamic(sender: String): BankSmsParser? =
+        SmsParserRegistry.getDynamic(sender)
 
-    fun get(format: SmsParser.BankFormat): BankSmsParser? = parsers[format]
-
-    fun getDynamic(sender: String): BankSmsParser? {
-        return dynamicParsers.entries.firstOrNull { 
-            sender.contains(it.key, ignoreCase = true) || it.key.contains(sender, ignoreCase = true)
-        }?.value
-    }
-
+    /**
+     * Rebuilds the dynamic parser map from [customBanks].
+     * Only enabled banks are registered.
+     */
     fun setDynamicParsers(customBanks: List<CustomBankEntity>) {
-        dynamicParsers.clear()
-        customBanks.filter { it.isEnabled }.forEach { bank ->
-            dynamicParsers[bank.senderAddress.lowercase()] = DynamicBankSmsParser(bank)
-        }
+        val parsers = customBanks
+            .filter { it.isEnabled }
+            .associate { bank ->
+                bank.senderAddress.lowercase() to DynamicBankSmsParser(bank) as BankSmsParser
+            }
+        SmsParserRegistry.setDynamicParsers(parsers)
     }
 }
 
@@ -102,22 +104,27 @@ internal fun buildParsedSms(
     receivedAt: Long,
     bankName: String
 ): ParseResult {
-    // Task 1: always use safe amount parsing
     val amount = rawAmount.toSafeAmount()
         ?: return ParseResult.Failure(
             reason     = "Could not parse amount '$rawAmount'",
             rawBody    = body,
             bankFormat = SmsParser.BankFormat.UNKNOWN
-        )
+        ).also {
+            SmsParseLogger.logFailure(bankName, "bad amount '$rawAmount'", body)
+        }
 
     val balance = rawBalance?.toSafeAmount()  // null is fine — balance is optional
 
-    // Task 4: prefer timestamp from SMS body over receive time
+    // Prefer timestamp from SMS body over receive time (handles delayed SMS)
     val timestampMs = SmsTimestampParser.extractOrFallback(body, receivedAt)
 
     val typeLabel = if (type == TransactionType.INCOME) "Received" else "Sent"
     val note  = "$typeLabel ETB ${"%.2f".format(amount)} · $bankName"
-    val hash  = sha256(sender + body)
+    val hash  = sha256(sender + body + timestampMs.toString() + amount.toString())
+
+    val (confidenceScore, validationReason) = ValidationEngine.validate(amount, type, body)
+
+    SmsParseLogger.logSuccess(bankName, type.name, amount, balance, sender)
 
     return ParseResult.Success(
         SmsParser.ParsedSms(
@@ -130,7 +137,10 @@ internal fun buildParsedSms(
             rawBody       = body,
             hash          = hash,
             bankName      = bankName,
-            smsDateString = null  // already consumed by SmsTimestampParser
+            smsDateString = null,  // already consumed by SmsTimestampParser
+            sender        = sender,
+            confidenceScore = confidenceScore,
+            parsingStatus = if (confidenceScore >= 0.8) "AUTO_VERIFIED" else "NEEDS_REVIEW"
         )
     )
 }

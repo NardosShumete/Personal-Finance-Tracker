@@ -31,7 +31,6 @@ import androidx.paging.compose.itemKey
 import com.portfolio.financetracker.R
 import com.portfolio.financetracker.domain.model.Transaction
 import com.portfolio.financetracker.ui.dashboard.components.TransactionItem
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionsScreen(
@@ -43,6 +42,50 @@ fun TransactionsScreen(
     val pagedTransactions: LazyPagingItems<Transaction> =
         viewModel.pagedTransactions.collectAsLazyPagingItems()
 
+    // Delete-all confirmation dialog state
+    var showDeleteAllDialog by remember { mutableStateOf(false) }
+
+    if (showDeleteAllDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteAllDialog = false },
+            icon = {
+                Icon(
+                    Icons.Default.DeleteForever,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = {
+                Text(
+                    "Delete All Transactions?",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Text(
+                    "This will permanently delete every transaction. This action cannot be undone.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.onEvent(DashboardEvent.DeleteAllTransactions)
+                        showDeleteAllDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) { Text("Delete All") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteAllDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -50,6 +93,17 @@ fun TransactionsScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (pagedTransactions.itemCount > 0) {
+                        IconButton(onClick = { showDeleteAllDialog = true }) {
+                            Icon(
+                                Icons.Default.DeleteForever,
+                                contentDescription = "Delete All",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
                 }
             )

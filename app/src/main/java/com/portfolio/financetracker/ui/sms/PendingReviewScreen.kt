@@ -142,9 +142,9 @@ fun PendingReviewScreen(
                 }
                 
                 if (pending.isEmpty()) {
-                EmptyPendingState(modifier = Modifier.padding(padding))
+                EmptyPendingState()
                 } else {
-                    val groupedPending = pending.groupBy { it.category.substringBefore(" ") }
+                    val groupedPending = pending.groupBy { it.bankName ?: "Other" }
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize(),

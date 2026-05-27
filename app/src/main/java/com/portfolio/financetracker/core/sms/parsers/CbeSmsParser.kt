@@ -25,20 +25,24 @@ object CbeSmsParser : BankSmsParser {
     override val bankName = "CBE"
     override val format   = SmsParser.BankFormat.CBE
 
-    // Regex compiled once at class load — not per-call (performance)
-    private val AMOUNT_RE  = Regex("""(?:credited|debited)\s+with\s+ETB\s+([\d,]+\.?\d*)""", RegexOption.IGNORE_CASE)
-    private val BALANCE_RE = Regex("""[Aa]vailable\s+balance[:\s]+ETB\s+([\d,]+\.?\d*)""")
-    private val TYPE_RE    = Regex("""(credited|debited)\s+with""", RegexOption.IGNORE_CASE)
+    override fun isSenderMatch(sender: String): Boolean {
+        val s = sender.lowercase()
+        return s.contains("cbe")
+    }
+
+    private val BALANCE_RE = Regex("""[Aa]vailable\s+balance[:\s]+ETB\s+([\d,]+(?:\.\d+)?)""")
 
     override fun parse(body: String, sender: String, receivedAt: Long): ParseResult {
         return try {
-            val rawAmount = AMOUNT_RE.find(body)?.groupValues?.get(1)
-                ?: return ParseResult.Failure("CBE: amount not found", body, format)
-
-            val typeStr = TYPE_RE.find(body)?.groupValues?.get(1)?.lowercase()
+            val typeResult = com.portfolio.financetracker.core.sms.TemplateExtractor.extractType(body)
                 ?: return ParseResult.Failure("CBE: transaction type not found", body, format)
+            
+            val type = typeResult.first
+            val keyword = typeResult.second
 
-            val type    = if (typeStr == "credited") TransactionType.INCOME else TransactionType.EXPENSE
+            val rawAmount = com.portfolio.financetracker.core.sms.TemplateExtractor.extractAmount(body, keyword)
+                ?: return ParseResult.Failure("CBE: amount not found or unsafe", body, format)
+
             val balance = BALANCE_RE.find(body)?.groupValues?.get(1)
 
             buildParsedSms(rawAmount, type, balance, "$bankName Transfer", body, sender, receivedAt, bankName)

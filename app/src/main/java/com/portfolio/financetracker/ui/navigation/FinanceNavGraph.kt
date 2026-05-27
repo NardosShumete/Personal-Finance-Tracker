@@ -21,6 +21,7 @@ import com.portfolio.financetracker.ui.auth.LoginScreen
 import com.portfolio.financetracker.ui.calendar.CalendarScreen
 import com.portfolio.financetracker.ui.charts.ChartsScreen
 import com.portfolio.financetracker.ui.dashboard.DashboardScreen
+import com.portfolio.financetracker.ui.sms.PendingReviewViewModel
 import com.portfolio.financetracker.ui.transaction.AddTransactionScreen
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Box
@@ -49,6 +50,10 @@ fun FinanceNavGraph(
     val currentRoute = currentEntry?.destination?.route
     val userProfile  by authViewModel.currentUser.collectAsState()
 
+    // Pending review badge — shared ViewModel scoped to the nav graph
+    val pendingReviewViewModel: PendingReviewViewModel = hiltViewModel()
+    val pendingReviewCount by pendingReviewViewModel.pendingCount.collectAsState()
+
     // Screens that should NOT show the drawer (auth flow)
     val noDrawerScreens = listOf(
         Screen.LoginScreen.route,
@@ -64,6 +69,7 @@ fun FinanceNavGraph(
             AppDrawer(
                 userProfile  = userProfile,
                 currentRoute = currentRoute,
+                pendingReviewCount = pendingReviewCount,
                 onNavigateTo = { route ->
                     scope.launch { drawerState.close() }
                     navController.navigate(route) {
@@ -164,6 +170,9 @@ fun FinanceNavGraph(
                     onNavigateToTransactions = {
                         navController.navigate(Screen.TransactionsScreen.route)
                     },
+                    onNavigateToPendingReview = {
+                        navController.navigate(Screen.PendingReviewScreen.route)
+                    },
                     onNavigateToCharts = { navController.navigate(Screen.ChartsScreen.route) },
                     onNavigateToSettings = { navController.navigate(Screen.SettingsScreen.route) },
                     onOpenDrawer = { scope.launch { drawerState.open() } }
@@ -250,8 +259,7 @@ fun FinanceNavGraph(
 
             // ── Insights ──────────────────────────────────────────────────────
             composable(route = Screen.InsightsScreen.route) {
-                PlaceholderScreen(
-                    title = "Insights",
+                com.portfolio.financetracker.ui.insights.InsightsScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

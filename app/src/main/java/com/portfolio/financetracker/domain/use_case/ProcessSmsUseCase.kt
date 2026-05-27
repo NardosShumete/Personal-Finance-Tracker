@@ -1,10 +1,14 @@
 package com.portfolio.financetracker.domain.use_case
 
 import com.portfolio.financetracker.core.sms.SmsParser
+import com.portfolio.financetracker.core.sms.SmsParseLogger
 import com.portfolio.financetracker.data.local.DataStoreManager
 import com.portfolio.financetracker.domain.model.Transaction
 import com.portfolio.financetracker.domain.model.TransactionSource
 import com.portfolio.financetracker.domain.repository.TransactionRepository
+import com.portfolio.financetracker.core.sms.ParseResult
+import com.portfolio.financetracker.data.local.dao.FailedParseDao
+import com.portfolio.financetracker.data.local.entity.FailedParseEntity
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
@@ -20,7 +24,8 @@ import javax.inject.Inject
  */
 class ProcessSmsUseCase @Inject constructor(
     private val repository: TransactionRepository,
-    private val dataStoreManager: DataStoreManager
+    private val dataStoreManager: DataStoreManager,
+    private val failedParseDao: FailedParseDao
 ) {
     suspend operator fun invoke(
         sender: String,
@@ -49,23 +54,47 @@ class ProcessSmsUseCase @Inject constructor(
 
         // Parse — pass empty set so the sender check inside SmsParser is skipped
         // (we already checked it above with better logic)
-        val parsed = SmsParser.parse(sender, body, receivedAt, emptySet())
-            ?: return Result.success(false)
+        val parseResult = SmsParser.parse(sender, body, receivedAt, emptySet())
 
-        val transaction = Transaction(
-            amount     = parsed.amount,
-            category   = parsed.category,
-            date       = parsed.timestampMs,
-            type       = parsed.type,
-            note       = parsed.note,
-            source     = TransactionSource.SMS,
-            rawSms     = parsed.rawBody,
-            smsBalance = parsed.balance,
-            smsHash    = parsed.hash,
-            isPending  = true,
-            bankName   = parsed.bankName.ifBlank { null }
-        )
+        when (parseResult) {
+            is ParseResult.Success -> {
+                val parsed = parseResult.parsed
+                SmsParseLogger.i("ProcessSmsUseCase: parsed ${parsed.bankName} ${parsed.type} ${parsed.amount}")
 
-        repository.insertFromSmsIfNotDuplicate(transaction)
+                val transaction = Transaction(
+                    amount     = parsed.amount,
+                    category   = parsed.category,
+                    date       = parsed.timestampMs,
+                    type       = parsed.type,
+                    note       = parsed.note,
+                    source     = TransactionSource.SMS,
+                    rawSms     = parsed.rawBody,
+                    smsBalance = parsed.balance,
+                    smsHash    = parsed.hash,
+                    isPending  = parsed.parsingStatus != "AUTO_VERIFIED",
+                    bankName   = parsed.bankName.ifBlank { null },
+                    sender     = parsed.sender,
+                    currency   = parsed.currency,
+                    merchant   = parsed.merchant,
+                    confidenceScore = parsed.confidenceScore,
+                    parsingStatus = parsed.parsingStatus
+                )
+
+                repository.insertFromSmsIfNotDuplicate(transaction)
+            }
+            is ParseResult.Failure -> {
+                val entity = FailedParseEntity(
+                    sender = sender,
+                    rawBody = body,
+                    date = receivedAt,
+                    reason = parseResult.reason
+                )
+                failedParseDao.insertFailedParse(entity)
+                false
+            }
+            is ParseResult.Ignored -> {
+                false
+            }
+        }
     }
 }

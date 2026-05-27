@@ -34,28 +34,27 @@ class DynamicBankSmsParser(
                 )
             }
             
-            // Extract Amount
-            // We look for the keyword and then try to find the next valid number
-            val amountRegexStr = if (type == TransactionType.INCOME) {
-                "${Regex.escape(config.creditKeyword)}\\s*([^A-Za-z\\s]+)"
-            } else {
-                "${Regex.escape(config.debitKeyword)}\\s*([^A-Za-z\\s]+)"
-            }
-            
+            // Extract Amount — look for the keyword then grab the next ETB number,
+            // or fall back to any ETB amount in the body.
+            // We use a strict numeric pattern (digits, commas, optional decimal)
+            // to avoid capturing punctuation or account numbers.
+            val keyword = if (type == TransactionType.INCOME) config.creditKeyword else config.debitKeyword
+            val amountRegexStr = "${Regex.escape(keyword)}\\s*(?:ETB)?\\s*([\\d,]+(?:\\.\\d+)?)"
+
             val amountMatch = Regex(amountRegexStr, RegexOption.IGNORE_CASE).find(body)
-                ?: Regex("ETB\\s*([\\d,]+\\.?\\d*)", RegexOption.IGNORE_CASE).find(body)
-                ?: Regex("([\\d,]+\\.?\\d*)\\s*ETB", RegexOption.IGNORE_CASE).find(body)
-                
+                ?: Regex("ETB\\s*([\\d,]+(?:\\.\\d+)?)", RegexOption.IGNORE_CASE).find(body)
+                ?: Regex("([\\d,]+(?:\\.\\d+)?)\\s*ETB", RegexOption.IGNORE_CASE).find(body)
+
             val rawAmount = amountMatch?.groupValues?.get(1) ?: return ParseResult.Failure(
                 reason = "Could not extract amount near keyword",
                 rawBody = body,
                 bankFormat = format
             )
 
-            // Extract Balance (optional)
+            // Extract Balance (optional) — use strict numeric pattern
             var rawBalance: String? = null
             if (config.balanceKeyword.isNotBlank() && lowerBody.contains(config.balanceKeyword.lowercase())) {
-                val balanceRegexStr = "${Regex.escape(config.balanceKeyword)}\\s*([^A-Za-z\\s]+)"
+                val balanceRegexStr = "${Regex.escape(config.balanceKeyword)}\\s*(?:ETB)?\\s*([\\d,]+(?:\\.\\d+)?)"
                 val balanceMatch = Regex(balanceRegexStr, RegexOption.IGNORE_CASE).find(body)
                 rawBalance = balanceMatch?.groupValues?.get(1)
             }

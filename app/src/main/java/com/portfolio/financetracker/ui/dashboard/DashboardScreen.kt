@@ -46,11 +46,13 @@ fun DashboardScreen(
     onNavigateToCharts: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     onNavigateToBanks: () -> Unit = {},
+    onNavigateToPendingReview: () -> Unit = {},
     onOpenDrawer: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
     bankViewModel: BankAccountViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val pendingCount by viewModel.pendingCount.collectAsState()
     val isDark = isSystemInDarkTheme()
     
     var showAddBankSheet by remember { mutableStateOf(false) }
@@ -174,6 +176,15 @@ fun DashboardScreen(
                     onPeriodChange = { viewModel.onEvent(DashboardEvent.OnPeriodChanged(it)) }
                 ) }
 
+                if (pendingCount > 0) {
+                    item {
+                        PendingAlertBanner(
+                            count = pendingCount,
+                            onClick = onNavigateToPendingReview
+                        )
+                    }
+                }
+
                 item {
                     BankAccountsSection(
                         viewModel = bankViewModel,
@@ -202,6 +213,53 @@ fun DashboardScreen(
 }
 
 // ── Sub-composables ───────────────────────────────────────────────────────────
+
+@Composable
+private fun PendingAlertBanner(count: Int, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.error),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Sms, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "$count New Transactions",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+                Text(
+                    text = "Tap to review and confirm",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
+                )
+            }
+            Icon(
+                Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
+    }
+}
 
 @Composable
 private fun BankBalanceCard(bank: BankBalance) {

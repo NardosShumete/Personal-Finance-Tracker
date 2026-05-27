@@ -5,5 +5,7 @@ data class TransactionUseCases(
     val getPagedTransactions: GetPagedTransactionsUseCase,
     val getTransaction: GetTransactionUseCase,
     val deleteTransaction: DeleteTransactionUseCase,
-    val addTransaction: AddTransactionUseCase
+    val deleteAllTransactions: DeleteAllTransactionsUseCase,
+    val addTransaction: AddTransactionUseCase,
+    val getPendingCount: GetPendingCountUseCase
 )

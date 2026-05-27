@@ -165,7 +165,7 @@ fun BankAccountsScreen(
                     // ── Total across all banks ────────────────────────────────
                     item {
                         val totalBalance = uiState.accounts.sumOf {
-                            it.totalIncome - it.totalExpense
+                            it.lastKnownBalance ?: (it.totalIncome - it.totalExpense)
                         }
                         TotalBalanceBanner(totalBalance = totalBalance)
                     }
@@ -312,7 +312,7 @@ private fun BankAccountCard(
             }
 
             // Balance
-            val balance = account.totalIncome - account.totalExpense
+            val balance = account.lastKnownBalance ?: (account.totalIncome - account.totalExpense)
             Text(
                 text = stringResource(R.string.balance_format, balance),
                 style = MaterialTheme.typography.titleSmall,

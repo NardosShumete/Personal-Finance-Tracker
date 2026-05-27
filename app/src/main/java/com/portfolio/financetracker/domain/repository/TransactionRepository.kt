@@ -60,4 +60,7 @@ interface TransactionRepository {
 
     /** Transactions filtered by bank name for BankTransactionsScreen */
     fun getTransactionsByBank(bankName: String): kotlinx.coroutines.flow.Flow<List<Transaction>>
+
+    /** Deletes every transaction in the database */
+    suspend fun deleteAllTransactions()
 }

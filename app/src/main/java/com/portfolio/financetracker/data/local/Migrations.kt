@@ -182,3 +182,34 @@ val MIGRATION_13_14 = object : Migration(13, 14) {
         }
     }
 }
+
+/**
+ * Migration 14 → 15: Upgrade SMS Parsing System
+ * - Add `sender`, `accountId`, `currency`, `merchant`, `confidenceScore`, `parsingStatus` to `transaction_table`
+ * - Create `failed_parse_table`
+ */
+val MIGRATION_14_15 = object : Migration(14, 15) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Add new columns to transaction_table
+        db.execSQL("ALTER TABLE `transaction_table` ADD COLUMN `sender` TEXT")
+        db.execSQL("ALTER TABLE `transaction_table` ADD COLUMN `accountId` INTEGER")
+        db.execSQL("ALTER TABLE `transaction_table` ADD COLUMN `currency` TEXT NOT NULL DEFAULT 'ETB'")
+        db.execSQL("ALTER TABLE `transaction_table` ADD COLUMN `merchant` TEXT")
+        db.execSQL("ALTER TABLE `transaction_table` ADD COLUMN `confidenceScore` REAL NOT NULL DEFAULT 0.0")
+        db.execSQL("ALTER TABLE `transaction_table` ADD COLUMN `parsingStatus` TEXT NOT NULL DEFAULT 'PENDING'")
+        
+        // Create failed_parse_table
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `failed_parse_table` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `sender` TEXT NOT NULL,
+                `rawBody` TEXT NOT NULL,
+                `date` INTEGER NOT NULL,
+                `reason` TEXT NOT NULL
+            )
+            """.trimIndent()
+        )
+    }
+}
+

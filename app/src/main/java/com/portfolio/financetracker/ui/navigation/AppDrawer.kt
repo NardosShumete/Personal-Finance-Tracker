@@ -20,6 +20,7 @@ fun AppDrawer(
     currentRoute: String?,
     onNavigateTo: (String) -> Unit,
     onSignOut: () -> Unit,
+    pendingReviewCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
     ModalDrawerSheet(modifier = modifier) {
@@ -116,6 +117,7 @@ fun AppDrawer(
             icon = Icons.Default.Sms,
             label = "SMS Review",
             selected = currentRoute == Screen.PendingReviewScreen.route,
+            badge = pendingReviewCount,
             onClick = { onNavigateTo(Screen.PendingReviewScreen.route) }
         )
 
@@ -144,11 +146,17 @@ private fun DrawerItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    badge: Int = 0
 ) {
     NavigationDrawerItem(
         icon = { Icon(icon, contentDescription = label) },
         label = { Text(label) },
+        badge = {
+            if (badge > 0) {
+                Badge { Text(badge.toString()) }
+            }
+        },
         selected = selected,
         onClick = onClick,
         modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)

@@ -6,6 +6,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.portfolio.financetracker.domain.model.Transaction
 import com.portfolio.financetracker.domain.model.TransactionType
+import com.portfolio.financetracker.domain.repository.BankAccountRepository
 import com.portfolio.financetracker.domain.use_case.GoalUseCases
 import com.portfolio.financetracker.domain.use_case.TransactionUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,7 +18,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -29,7 +29,8 @@ import javax.inject.Inject
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val transactionUseCases: TransactionUseCases,
-    private val goalUseCases: GoalUseCases
+    private val goalUseCases: GoalUseCases,
+    private val bankAccountRepository: BankAccountRepository
 ) : ViewModel() {
 
     private val _searchQuery   = MutableStateFlow("")
@@ -38,21 +39,29 @@ class DashboardViewModel @Inject constructor(
     val pagedTransactions: Flow<PagingData<Transaction>> =
         transactionUseCases.getPagedTransactions().cachedIn(viewModelScope)
 
+    val pendingCount: StateFlow<Int> =
+        transactionUseCases.getPendingCount()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
     val state: StateFlow<DashboardState> = combine(
         transactionUseCases.getTransactions(),
         _searchQuery,
         _selectedPeriod,
         goalUseCases.getGoal(
             SimpleDateFormat("MM-yyyy", Locale.getDefault()).format(Date())
-        )
-    ) { allTransactions, query, period, goal ->
-
+        ),
+        bankAccountRepository.getAllBankAccounts()
+    ) { args ->
+        @Suppress("UNCHECKED_CAST")
+        val allTransactions = args[0] as List<Transaction>
+        val query           = args[1] as String
+        val period          = args[2] as SummaryPeriod
+        val goal            = args[3] as com.portfolio.financetracker.domain.model.MonthlyGoal?
+        val bankAccounts    = args[4] as List<com.portfolio.financetracker.data.local.entity.BankAccountEntity>
         // Only confirmed transactions affect any totals
         val confirmed = allTransactions.filter { !it.isPending }
 
         // ── Time boundaries ───────────────────────────────────────────────────
-        val now = Calendar.getInstance()
-
         val startOfToday = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
@@ -84,25 +93,57 @@ class DashboardViewModel @Inject constructor(
         val monthIncome  = monthTxns.filter { it.type == TransactionType.INCOME  }.sumOf { it.amount }
         val monthExpense = monthTxns.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
 
-        // ── Search filter (list display only — never affects totals) ──────────
-        val displayList = if (query.isBlank()) confirmed
-        else confirmed.filter {
-            it.category.contains(query, ignoreCase = true) ||
-            it.note.contains(query, ignoreCase = true)
+        // ── Per-bank balances (from transactions) ─────────────────────────────
+        val periodTxns = when (period) {
+            SummaryPeriod.TODAY -> todayTxns
+            SummaryPeriod.THIS_MONTH -> monthTxns
+            SummaryPeriod.ALL_TIME -> confirmed
         }
 
-        // ── Per-bank balances ─────────────────────────────────────────────────
         val bankBalances = confirmed
             .filter { it.bankName != null }
             .groupBy { it.bankName!! }
-            .mapValues { (bankName, txns) ->
-                val bIncome  = txns.filter { it.type == TransactionType.INCOME  }.sumOf { it.amount }
-                val bExpense = txns.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
-                BankBalance(name = bankName, balance = bIncome - bExpense, income = bIncome, expense = bExpense)
+            .mapValues { (bankName, allBankTxns) ->
+                // Income and expense should be calculated from the PERIOD transactions
+                val periodBankTxns = periodTxns.filter { it.bankName == bankName }
+                val bIncome  = periodBankTxns.filter { it.type == TransactionType.INCOME  }.sumOf { it.amount }
+                val bExpense = periodBankTxns.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
+                
+                // For the Total Balance, use the most recent smsBalance
+                val latestSmsBalance = allBankTxns
+                    .sortedByDescending { it.date }
+                    .firstNotNullOfOrNull { it.smsBalance }
+                    
+                // If there's no smsBalance, fall back to historical sum of ALL TIME
+                val historicalBalance = allBankTxns.filter { it.type == TransactionType.INCOME }.sumOf { it.amount } - 
+                                        allBankTxns.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
+                                        
+                val finalBalance = latestSmsBalance ?: historicalBalance
+
+                BankBalance(name = bankName, balance = finalBalance, income = bIncome, expense = bExpense)
             }
 
+        // ── Total balance: sum real SMS balances from bank accounts ───────────
+        // If any bank has a real SMS-reported balance, sum those up.
+        // Banks without SMS data contribute their net (income - expense).
+        // Manual-only transactions (no bankName) are added on top.
+        val bankAccountsTotal = bankAccounts.sumOf { account ->
+            account.lastKnownBalance ?: (account.totalIncome - account.totalExpense)
+        }
+
+        // Manual transactions not linked to any bank account
+        val manualTotal = confirmed
+            .filter { it.bankName == null }
+            .sumOf { if (it.type == TransactionType.INCOME) it.amount else -it.amount }
+
+        // Use bank-account-based total when there are bank accounts with data,
+        // otherwise fall back to pure transaction net
+        val hasBankData = bankAccounts.any { it.transactionCount > 0 || it.lastKnownBalance != null }
+        val totalBalance = if (hasBankData) bankAccountsTotal + manualTotal
+                           else totalIncome - totalExpense
+
         DashboardState(
-            totalBalance    = totalIncome - totalExpense,
+            totalBalance    = totalBalance,
             totalIncome     = totalIncome,
             totalExpense    = totalExpense,
             todayIncome     = todayIncome,
@@ -127,6 +168,11 @@ class DashboardViewModel @Inject constructor(
             is DashboardEvent.DeleteTransaction    -> {
                 viewModelScope.launch {
                     transactionUseCases.deleteTransaction(event.transaction)
+                }
+            }
+            is DashboardEvent.DeleteAllTransactions -> {
+                viewModelScope.launch {
+                    transactionUseCases.deleteAllTransactions()
                 }
             }
         }

@@ -38,5 +38,13 @@ data class TransactionEntity(
     /** True = waiting for user confirmation in the Pending Review screen */
     val isPending: Boolean = false,
     /** Exact bank name from parser — never guessed from category string */
-    val bankName: String? = null
+    val bankName: String? = null,
+    
+    // ── Hybrid Template-Based Engine columns ──────────────────────────────────
+    val sender: String? = null,
+    val accountId: Int? = null,
+    val currency: String = "ETB",
+    val merchant: String? = null,
+    val confidenceScore: Double = 0.0,
+    val parsingStatus: String = "PENDING"
 )

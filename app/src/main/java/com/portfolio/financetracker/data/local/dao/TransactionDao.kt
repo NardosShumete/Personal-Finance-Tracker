@@ -50,4 +50,7 @@ interface TransactionDao {
 
     @Query("SELECT * FROM transaction_table WHERE bankName = :bankName AND isPending = 0 ORDER BY date DESC")
     fun getTransactionsByBank(bankName: String): Flow<List<TransactionEntity>>
+
+    @Query("DELETE FROM transaction_table")
+    suspend fun deleteAllTransactions()
 }
